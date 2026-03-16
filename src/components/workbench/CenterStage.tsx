@@ -338,7 +338,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
                             className={`flex aspect-square items-center justify-center transition-colors duration-200 ${fitClass}`}
                             style={{ backgroundColor: combo.bc }}
                           >
-                            {renderLogo(lf, combo.lc)}
+                            {renderLogo(lf, combo.lc, `m-${lf.file.id}-${i}`)}
                           </div>
                           <div className="flex items-center justify-between bg-card p-2">
                             {lf.type === "svg" ? (
