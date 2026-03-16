@@ -1,0 +1,140 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, LogOut, Folder, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Project = Tables<"projects">;
+
+export default function Projects() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const fetchProjects = async () => {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .order("updated_at", { ascending: false });
+    if (error) toast.error(error.message);
+    else setProjects(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchProjects(); }, []);
+
+  const createProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim() || !user) return;
+    const { error } = await supabase.from("projects").insert({ name: newName.trim(), user_id: user.id });
+    if (error) toast.error(error.message);
+    else {
+      setNewName("");
+      setCreating(false);
+      fetchProjects();
+    }
+  };
+
+  const deleteProject = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Delete this project and all its data?")) return;
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else fetchProjects();
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="flex items-center justify-between border-b px-6 py-4">
+        <h1 className="text-lg font-semibold tracking-tight">Chromatype</h1>
+        <Button variant="ghost" size="sm" onClick={signOut}>
+          <LogOut className="h-4 w-4" />
+        </Button>
+      </header>
+
+      <main className="mx-auto max-w-4xl p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Projects</h2>
+          <Button size="sm" onClick={() => setCreating(true)} className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" /> New
+          </Button>
+        </div>
+
+        <AnimatePresence>
+          {creating && (
+            <motion.form
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              onSubmit={createProject}
+              className="mb-4 flex gap-2"
+            >
+              <Input
+                autoFocus
+                placeholder="Project name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="h-10 bg-card font-mono text-sm"
+              />
+              <Button type="submit" size="sm" className="h-10 px-6">Create</Button>
+              <Button type="button" variant="ghost" size="sm" className="h-10" onClick={() => setCreating(false)}>Cancel</Button>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        {loading ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="dot-grid mb-4 flex h-20 w-20 items-center justify-center rounded-lg border border-dashed">
+              <Folder className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+            <p className="text-sm text-muted-foreground">No projects yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project, i) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                onClick={() => navigate(`/projects/${project.id}`)}
+                className="group relative cursor-pointer rounded-lg border bg-card p-4 bevel transition-all hover:border-foreground/10 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-card-foreground">{project.name}</h3>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      {new Date(project.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => deleteProject(project.id, e)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
