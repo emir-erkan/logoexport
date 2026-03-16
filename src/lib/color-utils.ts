@@ -57,7 +57,7 @@ export function isValidHex(hex: string): boolean {
 /**
  * Recolor SVG string: replace all fill/stroke colors with a new color
  */
-export function recolorSvg(svgString: string, newColor: string): string {
+export function recolorSvg(svgString: string, newColor: string, uniquePrefix?: string): string {
   // Replace fill and stroke attributes (but not "none" or "transparent")
   let result = svgString.replace(
     /fill="(?!none|transparent)([^"]*)"/gi,
@@ -76,5 +76,23 @@ export function recolorSvg(svgString: string, newColor: string): string {
     /stroke:\s*(?!none|transparent)[^;}"]+/gi,
     `stroke: ${newColor}`
   );
+
+  // Deduplicate SVG internal IDs to prevent collisions when multiple SVGs are inline
+  if (uniquePrefix) {
+    // Replace id="xxx" definitions and all url(#xxx) / href="#xxx" / xlink:href="#xxx" references
+    const idMap = new Map<string, string>();
+    result = result.replace(/\bid="([^"]+)"/g, (_match, id) => {
+      const newId = `${uniquePrefix}_${id}`;
+      idMap.set(id, newId);
+      return `id="${newId}"`;
+    });
+    for (const [oldId, newId] of idMap) {
+      const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      result = result.replace(new RegExp(`url\\(#${escaped}\\)`, 'g'), `url(#${newId})`);
+      result = result.replace(new RegExp(`href="#${escaped}"`, 'g'), `href="#${newId}"`);
+      result = result.replace(new RegExp(`xlink:href="#${escaped}"`, 'g'), `xlink:href="#${newId}"`);
+    }
+  }
+
   return result;
 }
