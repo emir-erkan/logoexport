@@ -14,13 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      project_colors: {
+        Row: {
+          created_at: string
+          hex: string
+          id: string
+          label: string | null
+          project_id: string
+          role: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          hex: string
+          id?: string
+          label?: string | null
+          project_id: string
+          role?: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          hex?: string
+          id?: string
+          label?: string | null
+          project_id?: string
+          role?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_colors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          project_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          project_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          project_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          share_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          share_token?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          share_token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_project_by_share_token: {
+        Args: { token: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+          share_token: string
+          updated_at: string
+        }[]
+      }
+      get_project_colors_by_share_token: {
+        Args: { token: string }
+        Returns: {
+          hex: string
+          id: string
+          label: string
+          project_id: string
+          role: string
+          sort_order: number
+        }[]
+      }
+      get_project_files_by_share_token: {
+        Args: { token: string }
+        Returns: {
+          file_name: string
+          id: string
+          project_id: string
+          storage_path: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
