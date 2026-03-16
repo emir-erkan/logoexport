@@ -146,11 +146,11 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
     );
   }
 
-  const renderLogo = (loadedFile: LoadedFile, logoColor: string, className?: string) => {
+  const renderLogo = (loadedFile: LoadedFile, logoColor: string, uniqueId: string, className?: string) => {
     if (loadedFile.type === "svg") {
       return (
         <div
-          dangerouslySetInnerHTML={{ __html: recolorSvg(loadedFile.content, logoColor) }}
+          dangerouslySetInnerHTML={{ __html: recolorSvg(loadedFile.content, logoColor, uniqueId) }}
           className={`h-full w-full [&>svg]:h-full [&>svg]:w-full ${className || ""}`}
         />
       );
