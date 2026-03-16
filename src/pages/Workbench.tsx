@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { LeftRail } from "@/components/workbench/LeftRail";
-import { CenterStage } from "@/components/workbench/CenterStage";
+import { CenterStage, type LoadedFile } from "@/components/workbench/CenterStage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Check, Copy } from "lucide-react";
@@ -26,6 +26,7 @@ export default function Workbench() {
   const [colors, setColors] = useState<ProjectColor[]>([]);
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [loadedFiles, setLoadedFiles] = useState<LoadedFile[]>([]);
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [fileType, setFileType] = useState<"svg" | "png">("svg");
   const [editing, setEditing] = useState(false);
@@ -51,40 +52,59 @@ export default function Workbench() {
     setColors(data || []);
   }, [id]);
 
+  const loadAllFileContents = useCallback(async (fileList: ProjectFile[]) => {
+    const results: LoadedFile[] = [];
+    for (const file of fileList) {
+      const type = getFileType(file.file_name);
+      if (type === "svg") {
+        const { data: fileData } = await supabase.storage.from("logos").download(file.storage_path);
+        if (fileData) {
+          results.push({ file, content: await fileData.text(), type });
+        }
+      } else {
+        const { data } = supabase.storage.from("logos").getPublicUrl(file.storage_path);
+        results.push({ file, content: data.publicUrl, type });
+      }
+    }
+    setLoadedFiles(results);
+  }, []);
+
   const fetchFiles = useCallback(async () => {
     if (!id) return;
     const { data } = await supabase.from("project_files").select("*").eq("project_id", id);
-    setFiles(data || []);
+    const fileList = data || [];
+    setFiles(fileList);
+
+    // Load all file contents for the matrix view
+    await loadAllFileContents(fileList);
+
     // Auto-select first file if none selected
-    if (data && data.length > 0 && !selectedFileId) {
-      loadFileContent(data[0]);
-      setSelectedFileId(data[0].id);
-    } else if (data && data.length === 0) {
+    if (fileList.length > 0 && !selectedFileId) {
+      setSelectedFileId(fileList[0].id);
+      await loadSingleFileContent(fileList[0]);
+    } else if (fileList.length === 0) {
       setFileContent(null);
       setSelectedFileId(null);
-    } else if (data && selectedFileId) {
-      // Reload content if selected file still exists
-      const selected = data.find((f) => f.id === selectedFileId);
+    } else if (selectedFileId) {
+      const selected = fileList.find((f) => f.id === selectedFileId);
       if (selected) {
-        loadFileContent(selected);
-      } else if (data.length > 0) {
-        loadFileContent(data[0]);
-        setSelectedFileId(data[0].id);
+        await loadSingleFileContent(selected);
+      } else if (fileList.length > 0) {
+        setSelectedFileId(fileList[0].id);
+        await loadSingleFileContent(fileList[0]);
       }
     }
-  }, [id, selectedFileId]);
+  }, [id, selectedFileId, loadAllFileContents]);
 
-  const loadFileContent = async (file: ProjectFile) => {
+  const loadSingleFileContent = async (file: ProjectFile) => {
     const type = getFileType(file.file_name);
     setFileType(type);
-
     if (type === "svg") {
       const { data: fileData } = await supabase.storage.from("logos").download(file.storage_path);
       if (fileData) {
         setFileContent(await fileData.text());
       }
     } else {
-      // PNG: use public URL
       const { data } = supabase.storage.from("logos").getPublicUrl(file.storage_path);
       setFileContent(data.publicUrl);
     }
@@ -94,7 +114,7 @@ export default function Workbench() {
     setSelectedFileId(fileId);
     const file = files.find((f) => f.id === fileId);
     if (file) {
-      await loadFileContent(file);
+      await loadSingleFileContent(file);
     }
   }, [files]);
 
@@ -172,8 +192,7 @@ export default function Workbench() {
         />
         <CenterStage
           colors={colors}
-          fileContent={fileContent}
-          fileType={fileType}
+          loadedFiles={loadedFiles}
           projectName={project.name}
         />
       </div>
