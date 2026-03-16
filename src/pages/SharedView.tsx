@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { CenterStage } from "@/components/workbench/CenterStage";
+import { CenterStage, type LoadedFile } from "@/components/workbench/CenterStage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ProjectColor = Tables<"project_colors">;
@@ -28,22 +28,33 @@ export default function SharedView() {
   const [project, setProject] = useState<SharedProject | null>(null);
   const [colors, setColors] = useState<ProjectColor[]>([]);
   const [allFiles, setAllFiles] = useState<SharedFile[]>([]);
-  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<string | null>(null);
-  const [fileType, setFileType] = useState<"svg" | "png">("svg");
+  const [loadedFiles, setLoadedFiles] = useState<LoadedFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  const loadFileContent = async (file: SharedFile) => {
-    const type = getFileType(file.file_name);
-    setFileType(type);
-    if (type === "svg") {
-      const { data: fileBlob } = await supabase.storage.from("logos").download(file.storage_path);
-      if (fileBlob) setFileContent(await fileBlob.text());
-    } else {
-      const { data } = supabase.storage.from("logos").getPublicUrl(file.storage_path);
-      setFileContent(data.publicUrl);
+  const loadAllFiles = async (files: SharedFile[]) => {
+    const results: LoadedFile[] = [];
+    for (const file of files) {
+      const type = getFileType(file.file_name);
+      if (type === "svg") {
+        const { data: fileBlob } = await supabase.storage.from("logos").download(file.storage_path);
+        if (fileBlob) {
+          results.push({
+            file: { ...file, created_at: "" } as any,
+            content: await fileBlob.text(),
+            type,
+          });
+        }
+      } else {
+        const { data } = supabase.storage.from("logos").getPublicUrl(file.storage_path);
+        results.push({
+          file: { ...file, created_at: "" } as any,
+          content: data.publicUrl,
+          type,
+        });
+      }
     }
+    setLoadedFiles(results);
   };
 
   useEffect(() => {
@@ -63,20 +74,11 @@ export default function SharedView() {
       const { data: filesData } = await supabase.rpc("get_project_files_by_share_token", { token: shareToken });
       const files = (filesData as SharedFile[]) || [];
       setAllFiles(files);
-      if (files.length > 0) {
-        setSelectedFileId(files[0].id);
-        await loadFileContent(files[0]);
-      }
+      await loadAllFiles(files);
       setLoading(false);
     };
     load();
   }, [shareToken]);
-
-  const handleFileSelect = async (fileId: string) => {
-    setSelectedFileId(fileId);
-    const file = allFiles.find((f) => f.id === fileId);
-    if (file) await loadFileContent(file);
-  };
 
   if (loading) {
     return (
@@ -107,30 +109,8 @@ export default function SharedView() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
-        {/* Client sidebar: read-only palette + file selector */}
+        {/* Client sidebar: read-only palette */}
         <div className="w-64 border-r bg-card p-4 overflow-y-auto">
-          {/* File selector */}
-          {allFiles.length > 1 && (
-            <div className="mb-4">
-              <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">Logos</p>
-              <div className="space-y-1">
-                {allFiles.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => handleFileSelect(f.id)}
-                    className={`w-full text-left rounded-lg border p-2 text-xs font-mono transition-colors ${
-                      selectedFileId === f.id
-                        ? "border-foreground/30 bg-accent text-foreground"
-                        : "border-transparent text-muted-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    {f.file_name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Palette</p>
           <div className="space-y-2">
             {colors.map((c) => (
@@ -144,8 +124,7 @@ export default function SharedView() {
         </div>
         <CenterStage
           colors={colors}
-          fileContent={fileContent}
-          fileType={fileType}
+          loadedFiles={loadedFiles}
           projectName={project.name}
           readOnly
         />
