@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { recolorSvg, contrastRatio, wcagLevel } from "@/lib/color-utils";
 import { ExportDialog } from "./ExportDialog";
-import { Download, Maximize, Frame } from "lucide-react";
+import { BatchExportDialog } from "./BatchExportDialog";
+import { Download, Maximize, Frame, CheckSquare, Square, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -24,6 +25,8 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [selectedBg, setSelectedBg] = useState<string | null>(null);
   const [exportTarget, setExportTarget] = useState<{ logo: string; bg: string } | null>(null);
+  const [selectedCombos, setSelectedCombos] = useState<Set<string>>(new Set());
+  const [showBatchExport, setShowBatchExport] = useState(false);
 
   const isSvg = fileType === "svg";
 
@@ -36,14 +39,13 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
     [colors]
   );
 
-  // Build unique combos for matrix, sorted by contrast (high→low)
   const matrixCombos = useMemo(() => {
     if (isSvg) {
       const seen = new Set<string>();
       const combos: { lc: string; bc: string; ratio: number }[] = [];
       for (const lc of logoColors) {
         for (const bc of bgColors) {
-          if (lc.hex === bc.hex) continue; // skip same-color combos
+          if (lc.hex === bc.hex) continue;
           const key = `${lc.hex}-${bc.hex}`;
           if (seen.has(key)) continue;
           seen.add(key);
@@ -53,21 +55,37 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
       combos.sort((a, b) => b.ratio - a.ratio);
       return combos;
     } else {
-      // PNG: just show on different backgrounds
       return bgColors.map((bc) => ({
-        lc: "#000000", // placeholder, not used for recoloring
+        lc: "#000000",
         bc: bc.hex,
         ratio: 0,
       }));
     }
   }, [logoColors, bgColors, isSvg]);
 
-  // Manual mode defaults
   const activeLogo = selectedLogo || logoColors[0]?.hex || "#000000";
   const activeBg = selectedBg || bgColors[0]?.hex || "#FFFFFF";
-
   const fitClass = fit === "fit" ? "p-0" : "p-6";
   const fitClassLarge = fit === "fit" ? "p-0" : "p-12";
+
+  const toggleCombo = (key: string) => {
+    setSelectedCombos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedCombos.size === matrixCombos.length) {
+      setSelectedCombos(new Set());
+    } else {
+      setSelectedCombos(new Set(matrixCombos.map((c) => `${c.lc}-${c.bc}`)));
+    }
+  };
+
+  const batchCombos = matrixCombos.filter((c) => selectedCombos.has(`${c.lc}-${c.bc}`));
 
   if (!fileContent) {
     return (
@@ -101,7 +119,6 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Controls bar */}
       <div className="flex items-center justify-center gap-4 border-b px-4 py-3">
-        {/* Mode toggle */}
         <div className="flex rounded-lg bg-muted p-0.5">
           {(["manual", "matrix"] as const).map((m) => (
             <button
@@ -116,7 +133,6 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
           ))}
         </div>
 
-        {/* Fit toggle */}
         <div className="flex rounded-lg bg-muted p-0.5">
           <button
             onClick={() => setFit("fit")}
@@ -135,22 +151,43 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
             <Frame className="h-3 w-3" /> Padded
           </button>
         </div>
+
+        {/* Batch controls (matrix mode only) */}
+        {mode === "matrix" && matrixCombos.length > 0 && (
+          <>
+            <div className="h-4 w-px bg-border" />
+            <button
+              onClick={toggleAll}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {selectedCombos.size === matrixCombos.length ? (
+                <CheckSquare className="h-3.5 w-3.5" />
+              ) : (
+                <Square className="h-3.5 w-3.5" />
+              )}
+              {selectedCombos.size > 0 ? `${selectedCombos.size} selected` : "Select all"}
+            </button>
+            {selectedCombos.size > 0 && (
+              <button
+                onClick={() => setShowBatchExport(true)}
+                className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
+              >
+                <Package className="h-3.5 w-3.5" /> Export ZIP
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       {mode === "manual" ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto p-8">
-          {/* Preview */}
           <div
             className={`flex aspect-square w-full max-w-md items-center justify-center rounded-lg transition-colors duration-200 ${fitClassLarge}`}
             style={{ backgroundColor: activeBg }}
           >
             {renderLogo(activeLogo)}
           </div>
-
-          {/* Contrast badge (SVG only) */}
           {isSvg && <ContrastBadge logo={activeLogo} bg={activeBg} />}
-
-          {/* Color selectors */}
           <div className="flex gap-8">
             {isSvg && (
               <div>
@@ -185,8 +222,6 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
               </div>
             </div>
           </div>
-
-          {/* Export button */}
           <button
             onClick={() => setExportTarget({ logo: activeLogo, bg: activeBg })}
             className="flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-xs font-medium text-background transition-opacity hover:opacity-80"
@@ -195,7 +230,6 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
           </button>
         </div>
       ) : (
-        /* Matrix mode */
         <div className="flex-1 overflow-y-auto p-6">
           {matrixCombos.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">
@@ -205,42 +239,58 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
             </p>
           ) : (
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(180px, 1fr))` }}>
-              {matrixCombos.map((combo, i) => (
-                <motion.div
-                  key={`${combo.lc}-${combo.bc}`}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="group relative overflow-hidden rounded-lg border bevel transition-all hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div
-                    className={`flex aspect-square items-center justify-center transition-colors duration-200 ${fitClass}`}
-                    style={{ backgroundColor: combo.bc }}
+              {matrixCombos.map((combo, i) => {
+                const comboKey = `${combo.lc}-${combo.bc}`;
+                const isSelected = selectedCombos.has(comboKey);
+                return (
+                  <motion.div
+                    key={comboKey}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    className={`group relative overflow-hidden rounded-lg border bevel transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${
+                      isSelected ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : ""
+                    }`}
+                    onClick={() => toggleCombo(comboKey)}
                   >
-                    {renderLogo(combo.lc)}
-                  </div>
-                  <div className="flex items-center justify-between bg-card p-2">
-                    {isSvg ? (
-                      <ContrastBadge logo={combo.lc} bg={combo.bc} small />
-                    ) : (
-                      <span className="font-mono text-[10px] text-muted-foreground">{combo.bc}</span>
-                    )}
-                    <button
-                      onClick={() => setExportTarget({ logo: combo.lc, bg: combo.bc })}
-                      className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-muted group-hover:opacity-100"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {isSvg && (
-                    <div className="flex gap-1 px-2 pb-2">
-                      <span className="font-mono text-[10px] text-muted-foreground">{combo.lc}</span>
-                      <span className="text-[10px] text-muted-foreground/40">/</span>
-                      <span className="font-mono text-[10px] text-muted-foreground">{combo.bc}</span>
+                    {/* Selection indicator */}
+                    <div className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
+                      isSelected
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-muted-foreground/30 bg-background/60 opacity-0 group-hover:opacity-100"
+                    }`}>
+                      {isSelected && <CheckSquare className="h-3 w-3" />}
                     </div>
-                  )}
-                </motion.div>
-              ))}
+
+                    <div
+                      className={`flex aspect-square items-center justify-center transition-colors duration-200 ${fitClass}`}
+                      style={{ backgroundColor: combo.bc }}
+                    >
+                      {renderLogo(combo.lc)}
+                    </div>
+                    <div className="flex items-center justify-between bg-card p-2">
+                      {isSvg ? (
+                        <ContrastBadge logo={combo.lc} bg={combo.bc} small />
+                      ) : (
+                        <span className="font-mono text-[10px] text-muted-foreground">{combo.bc}</span>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setExportTarget({ logo: combo.lc, bg: combo.bc }); }}
+                        className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-muted group-hover:opacity-100"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {isSvg && (
+                      <div className="flex gap-1 px-2 pb-2">
+                        <span className="font-mono text-[10px] text-muted-foreground">{combo.lc}</span>
+                        <span className="text-[10px] text-muted-foreground/40">/</span>
+                        <span className="font-mono text-[10px] text-muted-foreground">{combo.bc}</span>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -252,6 +302,17 @@ export function CenterStage({ colors, fileContent, fileType, projectName, readOn
           onOpenChange={(open) => !open && setExportTarget(null)}
           logoColor={exportTarget.logo}
           bgColor={exportTarget.bg}
+          svgContent={fileContent}
+          projectName={projectName}
+          fileType={fileType}
+        />
+      )}
+
+      {showBatchExport && fileContent && (
+        <BatchExportDialog
+          open={showBatchExport}
+          onOpenChange={setShowBatchExport}
+          combos={batchCombos}
           svgContent={fileContent}
           projectName={projectName}
           fileType={fileType}
