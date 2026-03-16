@@ -1,6 +1,10 @@
 /**
  * Parse hex to RGB
  */
+export function normalizeHex(hex: string): string {
+  return hex.startsWith("#") ? hex.toUpperCase() : `#${hex.toUpperCase()}`;
+}
+
 export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
@@ -24,8 +28,11 @@ export function relativeLuminance(hex: string): number {
  * Contrast ratio between two hex colors
  */
 export function contrastRatio(hex1: string, hex2: string): number {
-  const l1 = relativeLuminance(hex1);
-  const l2 = relativeLuminance(hex2);
+  const n1 = normalizeHex(hex1);
+  const n2 = normalizeHex(hex2);
+  if (n1 === n2) return 1;
+  const l1 = relativeLuminance(n1);
+  const l2 = relativeLuminance(n2);
   const lighter = Math.max(l1, l2);
   const darker = Math.min(l1, l2);
   return (lighter + 0.05) / (darker + 0.05);
