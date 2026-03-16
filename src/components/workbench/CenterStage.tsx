@@ -250,7 +250,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
             className={`flex aspect-square w-full max-w-md items-center justify-center rounded-lg transition-colors duration-200 ${fitClassLarge}`}
             style={{ backgroundColor: activeBg }}
           >
-            {renderLogo(activeFile, activeLogo)}
+            {renderLogo(activeFile, activeLogo, `manual-${selectedFileIdx}`)}
           </div>
           {activeFile.type === "svg" && <ContrastBadge logo={activeLogo} bg={activeBg} />}
           <div className="flex gap-8">
