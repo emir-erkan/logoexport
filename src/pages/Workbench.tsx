@@ -6,13 +6,17 @@ import { LeftRail } from "@/components/workbench/LeftRail";
 import { CenterStage } from "@/components/workbench/CenterStage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Share2, Check, Copy } from "lucide-react";
+import { ArrowLeft, Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Project = Tables<"projects">;
 type ProjectColor = Tables<"project_colors">;
 type ProjectFile = Tables<"project_files">;
+
+function getFileType(fileName: string): "svg" | "png" {
+  return fileName.toLowerCase().endsWith(".svg") ? "svg" : "png";
+}
 
 export default function Workbench() {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +25,9 @@ export default function Workbench() {
   const [project, setProject] = useState<Project | null>(null);
   const [colors, setColors] = useState<ProjectColor[]>([]);
   const [files, setFiles] = useState<ProjectFile[]>([]);
-  const [svgContent, setSvgContent] = useState<string | null>(null);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [fileContent, setFileContent] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<"svg" | "png">("svg");
   const [editing, setEditing] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [copied, setCopied] = useState(false);
@@ -49,15 +55,48 @@ export default function Workbench() {
     if (!id) return;
     const { data } = await supabase.from("project_files").select("*").eq("project_id", id);
     setFiles(data || []);
-    // Load SVG content from storage
-    if (data && data.length > 0) {
-      const { data: fileData } = await supabase.storage.from("logos").download(data[0].storage_path);
-      if (fileData) {
-        const text = await fileData.text();
-        setSvgContent(text);
+    // Auto-select first file if none selected
+    if (data && data.length > 0 && !selectedFileId) {
+      loadFileContent(data[0]);
+      setSelectedFileId(data[0].id);
+    } else if (data && data.length === 0) {
+      setFileContent(null);
+      setSelectedFileId(null);
+    } else if (data && selectedFileId) {
+      // Reload content if selected file still exists
+      const selected = data.find((f) => f.id === selectedFileId);
+      if (selected) {
+        loadFileContent(selected);
+      } else if (data.length > 0) {
+        loadFileContent(data[0]);
+        setSelectedFileId(data[0].id);
       }
     }
-  }, [id]);
+  }, [id, selectedFileId]);
+
+  const loadFileContent = async (file: ProjectFile) => {
+    const type = getFileType(file.file_name);
+    setFileType(type);
+
+    if (type === "svg") {
+      const { data: fileData } = await supabase.storage.from("logos").download(file.storage_path);
+      if (fileData) {
+        setFileContent(await fileData.text());
+      }
+    } else {
+      // PNG: use public URL
+      const { data } = supabase.storage.from("logos").getPublicUrl(file.storage_path);
+      setFileContent(data.publicUrl);
+    }
+  };
+
+  const handleFileSelect = useCallback(async (fileId: string) => {
+    setSelectedFileId(fileId);
+    const file = files.find((f) => f.id === fileId);
+    if (file) {
+      await loadFileContent(file);
+    }
+  }, [files]);
 
   useEffect(() => {
     fetchProject();
@@ -91,7 +130,6 @@ export default function Workbench() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Header */}
       <header className="flex h-12 items-center justify-between border-b px-3">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/projects")}>
@@ -121,20 +159,21 @@ export default function Workbench() {
         </Button>
       </header>
 
-      {/* Body */}
       <div className="flex flex-1 overflow-hidden">
         <LeftRail
           projectId={project.id}
           colors={colors}
           files={files}
-          svgContent={svgContent}
+          selectedFileId={selectedFileId}
+          fileContent={fileContent}
           onColorsChange={fetchColors}
           onFilesChange={fetchFiles}
-          onSvgContentChange={setSvgContent}
+          onFileSelect={handleFileSelect}
         />
         <CenterStage
           colors={colors}
-          svgContent={svgContent}
+          fileContent={fileContent}
+          fileType={fileType}
           projectName={project.name}
         />
       </div>

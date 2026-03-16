@@ -17,6 +17,7 @@ interface ExportDialogProps {
   bgColor: string;
   svgContent: string;
   projectName: string;
+  fileType?: "svg" | "png";
 }
 
 const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
@@ -29,8 +30,11 @@ export function ExportDialog({
   bgColor,
   svgContent,
   projectName,
+  fileType = "svg",
 }: ExportDialogProps) {
-  const [format, setFormat] = useState<typeof FORMATS[number]>("png");
+  const isSvg = fileType === "svg";
+  const availableFormats = isSvg ? FORMATS : (["png", "jpg", "pdf"] as const);
+  const [format, setFormat] = useState<typeof FORMATS[number]>(isSvg ? "png" : "png");
   const [transparent, setTransparent] = useState(false);
   const [size, setSize] = useState(1024);
   const [customSize, setCustomSize] = useState("");
@@ -54,6 +58,7 @@ export function ExportDialog({
         bgColor,
         svgContent,
         fileName: projectName,
+        fileType,
       });
       const ext = format;
       downloadBlob(blob, `${projectName}-${logoColor.replace("#", "")}-on-${bgColor.replace("#", "")}.${ext}`);
@@ -77,7 +82,7 @@ export function ExportDialog({
           <div>
             <p className="mb-2 text-xs text-muted-foreground uppercase tracking-widest">Format</p>
             <div className="flex gap-1.5">
-              {FORMATS.map((f) => (
+              {availableFormats.map((f) => (
                 <button
                   key={f}
                   onClick={() => setFormat(f)}
