@@ -27,7 +27,6 @@ export default function SharedView() {
   const { shareToken } = useParams<{ shareToken: string }>();
   const [project, setProject] = useState<SharedProject | null>(null);
   const [colors, setColors] = useState<ProjectColor[]>([]);
-  const [allFiles, setAllFiles] = useState<SharedFile[]>([]);
   const [loadedFiles, setLoadedFiles] = useState<LoadedFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -73,7 +72,6 @@ export default function SharedView() {
 
       const { data: filesData } = await supabase.rpc("get_project_files_by_share_token", { token: shareToken });
       const files = (filesData as SharedFile[]) || [];
-      setAllFiles(files);
       await loadAllFiles(files);
       setLoading(false);
     };
@@ -109,8 +107,8 @@ export default function SharedView() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
-        {/* Client sidebar: read-only palette */}
-        <div className="w-64 border-r bg-card p-4 overflow-y-auto">
+        {/* Client sidebar: read-only palette (hidden on mobile) */}
+        <div className="hidden sm:block w-64 border-r bg-card p-4 overflow-y-auto">
           <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Palette</p>
           <div className="space-y-2">
             {colors.map((c) => (
