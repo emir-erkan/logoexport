@@ -67,6 +67,7 @@ export function ExportDialog({
         fileName: projectName,
         fileType,
         padded: fit === "padded",
+        svgGroups,
       });
       const ext = format;
       const bgLabel = effectiveTransparent ? "transparent" : bgColor.replace("#", "");
