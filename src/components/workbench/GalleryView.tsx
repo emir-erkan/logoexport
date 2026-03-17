@@ -30,6 +30,8 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchOpen, setBatchOpen] = useState(false);
 
+  const canRecolor = activeFile.type === "svg" ? hasRecolorableContent(svgGroups) : false;
+
   const logoColors = useMemo(
     () => colors.filter((c) => c.role === "logo" || c.role === "both"),
     [colors]
@@ -53,18 +55,26 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
     return [transparent, ...bgColors];
   }, [bgColors]);
 
+  // When logo can't be recolored, use a single placeholder logo entry
+  const effectiveLogoColors = useMemo(() => {
+    if (!canRecolor) {
+      return [{ id: "__original__", hex: "#000000", role: "logo", label: "Original", project_id: "", sort_order: 0, created_at: "" } as ProjectColor];
+    }
+    return logoColors;
+  }, [canRecolor, logoColors]);
+
   const sections = useMemo(() => {
     return bgColorsWithTransparent.map((bg) => {
-      const combos = logoColors
+      const combos = effectiveLogoColors
         .map((logo) => ({
           logo,
           bg,
-          ratio: bg.hex === "transparent" ? 0 : contrastRatio(logo.hex, bg.hex),
+          ratio: bg.hex === "transparent" ? 0 : canRecolor ? contrastRatio(logo.hex, bg.hex) : 0,
         }))
         .sort((a, b) => b.ratio - a.ratio);
       return { bg, combos };
     });
-  }, [logoColors, bgColorsWithTransparent]);
+  }, [effectiveLogoColors, bgColorsWithTransparent, canRecolor]);
 
   const fitClass = fit === "fit" ? "p-0" : "p-6";
 
