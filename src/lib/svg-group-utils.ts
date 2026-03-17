@@ -56,6 +56,18 @@ function extractColorsFromElement(element: Element): string[] {
   const colors = new Set<string>();
   
   const processElement = (el: Element) => {
+    // Check for <style> blocks within the element
+    if (el.tagName.toLowerCase() === "style" && el.textContent) {
+      const cssColors = el.textContent.match(/(?:fill|stroke):\s*([^;}"]+)/gi) || [];
+      cssColors.forEach((match) => {
+        const val = match.replace(/^(?:fill|stroke):\s*/i, "").trim();
+        if (val !== "none" && val !== "transparent" && !val.startsWith("url(")) {
+          colors.add(normalizeColor(val));
+        }
+      });
+      return;
+    }
+
     // Check attributes
     const fill = el.getAttribute("fill");
     if (fill && fill !== "none" && fill !== "transparent" && !fill.startsWith("url(")) {
@@ -84,6 +96,9 @@ function extractColorsFromElement(element: Element): string[] {
       }
     }
 
+    // Check class-based colors by looking at computed style won't work in DOMParser
+    // So also check for class attribute - colors may come from SVG-level <style>
+    
     // Recurse children
     for (const child of Array.from(el.children)) {
       processElement(child);
@@ -91,6 +106,47 @@ function extractColorsFromElement(element: Element): string[] {
   };
 
   processElement(element);
+  
+  // Also extract colors from the SVG root <style> that apply to classes used in this element
+  const root = element.ownerDocument?.querySelector("svg");
+  if (root) {
+    const styleEl = root.querySelector("style");
+    if (styleEl?.textContent) {
+      // Find all classes used in this element's subtree
+      const usedClasses = new Set<string>();
+      const collectClasses = (el: Element) => {
+        const cls = el.getAttribute("class");
+        if (cls) cls.split(/\s+/).forEach(c => usedClasses.add(c));
+        for (const child of Array.from(el.children)) collectClasses(child);
+      };
+      collectClasses(element);
+      
+      // Parse CSS rules for those classes
+      const css = styleEl.textContent;
+      usedClasses.forEach(cls => {
+        const escaped = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const ruleMatch = css.match(new RegExp(`\\.${escaped}\\s*\\{([^}]+)\\}`, 'i'));
+        if (ruleMatch) {
+          const declarations = ruleMatch[1];
+          const fillM = declarations.match(/fill:\s*([^;}"]+)/i);
+          if (fillM) {
+            const val = fillM[1].trim();
+            if (val !== "none" && val !== "transparent" && !val.startsWith("url(")) {
+              colors.add(normalizeColor(val));
+            }
+          }
+          const strokeM = declarations.match(/stroke:\s*([^;}"]+)/i);
+          if (strokeM) {
+            const val = strokeM[1].trim();
+            if (val !== "none" && val !== "transparent" && !val.startsWith("url(")) {
+              colors.add(normalizeColor(val));
+            }
+          }
+        }
+      });
+    }
+  }
+
   return Array.from(colors);
 }
 
@@ -126,17 +182,60 @@ export function selectiveRecolorSvg(
     return fullRecolor(svgString, newColor, uniquePrefix);
   }
 
+  // For groups using class-based styling from <style> blocks,
+  // we need to also recolor via the SVG root <style>
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgString, "image/svg+xml");
   const svgEl = doc.querySelector("svg");
   if (!svgEl) return svgString;
 
-  // Recolor only elements within recolorable groups
+  // Collect classes used in recolorable groups
+  const recolorableClasses = new Set<string>();
+  const preservedClasses = new Set<string>();
+  
+  const collectClasses = (el: Element, target: Set<string>) => {
+    const cls = el.getAttribute("class");
+    if (cls) cls.split(/\s+/).forEach(c => target.add(c));
+    for (const child of Array.from(el.children)) collectClasses(child, target);
+  };
+
+  recolorableIds.forEach((groupId) => {
+    const group = svgEl.querySelector(`#${CSS.escape(groupId)}`);
+    if (group) collectClasses(group, recolorableClasses);
+  });
+  
+  detectedGroups.filter(g => !g.isRecolorable).forEach((g) => {
+    const group = svgEl.querySelector(`#${CSS.escape(g.id)}`);
+    if (group) collectClasses(group, preservedClasses);
+  });
+
+  // Remove classes that are shared with preserved groups
+  preservedClasses.forEach(c => recolorableClasses.delete(c));
+
+  // Recolor inline attributes in recolorable groups
   recolorableIds.forEach((groupId) => {
     const group = svgEl.querySelector(`#${CSS.escape(groupId)}`);
     if (!group) return;
     recolorElement(group, newColor);
   });
+
+  // Recolor CSS rules for classes only used in recolorable groups
+  const styleEl = svgEl.querySelector("style");
+  if (styleEl?.textContent && recolorableClasses.size > 0) {
+    let css = styleEl.textContent;
+    recolorableClasses.forEach(cls => {
+      const escaped = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      css = css.replace(
+        new RegExp(`(\\.${escaped}\\s*\\{[^}]*?)fill:\\s*(?!none|transparent)[^;}"]+`, 'gi'),
+        `$1fill: ${newColor}`
+      );
+      css = css.replace(
+        new RegExp(`(\\.${escaped}\\s*\\{[^}]*?)stroke:\\s*(?!none|transparent)[^;}"]+`, 'gi'),
+        `$1stroke: ${newColor}`
+      );
+    });
+    styleEl.textContent = css;
+  }
 
   let result = new XMLSerializer().serializeToString(svgEl);
 
@@ -187,6 +286,7 @@ function fullRecolor(svgString: string, newColor: string, uniquePrefix?: string)
     /stroke="(?!none|transparent)([^"]*)"/gi,
     `stroke="${newColor}"`
   );
+  // Inline styles
   result = result.replace(
     /fill:\s*(?!none|transparent)[^;}"]+/gi,
     `fill: ${newColor}`
@@ -194,6 +294,21 @@ function fullRecolor(svgString: string, newColor: string, uniquePrefix?: string)
   result = result.replace(
     /stroke:\s*(?!none|transparent)[^;}"]+/gi,
     `stroke: ${newColor}`
+  );
+  // CSS <style> blocks: replace color values in fill/stroke declarations
+  result = result.replace(
+    /(<style[^>]*>)([\s\S]*?)(<\/style>)/gi,
+    (_match, open, css, close) => {
+      let newCss = css.replace(
+        /fill:\s*(?!none|transparent)[^;}"]+/gi,
+        `fill: ${newColor}`
+      );
+      newCss = newCss.replace(
+        /stroke:\s*(?!none|transparent)[^;}"]+/gi,
+        `stroke: ${newColor}`
+      );
+      return open + newCss + close;
+    }
   );
 
   if (uniquePrefix) {
