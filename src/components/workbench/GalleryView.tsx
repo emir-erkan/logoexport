@@ -258,6 +258,7 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
           projectName={`gallery`}
           fileType={activeFile.type}
           fit={fit}
+          svgGroups={svgGroups}
         />
       )}
     </div>

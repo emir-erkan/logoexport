@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { exportAsset, downloadBlob } from "@/lib/export-utils";
 import { toast } from "sonner";
+import type { SvgGroup } from "@/lib/svg-group-utils";
 
 interface ExportDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ interface ExportDialogProps {
   projectName: string;
   fileType?: "svg" | "png";
   fit?: "fit" | "padded";
+  svgGroups?: SvgGroup[];
 }
 
 const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
@@ -33,6 +35,7 @@ export function ExportDialog({
   projectName,
   fileType = "svg",
   fit = "padded",
+  svgGroups,
 }: ExportDialogProps) {
   const isSvg = fileType === "svg";
   const availableFormats = isSvg ? FORMATS : (["png", "jpg", "pdf"] as const);
@@ -64,6 +67,7 @@ export function ExportDialog({
         fileName: projectName,
         fileType,
         padded: fit === "padded",
+        svgGroups,
       });
       const ext = format;
       const bgLabel = effectiveTransparent ? "transparent" : bgColor.replace("#", "");

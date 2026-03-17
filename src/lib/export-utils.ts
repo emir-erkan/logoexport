@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
 import "svg2pdf.js";
-import { recolorSvg } from "./color-utils";
 import { selectiveRecolorSvg, type SvgGroup } from "./svg-group-utils";
 
 export interface ExportOptions {
@@ -13,6 +12,7 @@ export interface ExportOptions {
   fileName: string;
   fileType?: "svg" | "png";
   padded?: boolean;
+  svgGroups?: SvgGroup[];
 }
 
 function svgToDataUrl(svgString: string): string {
@@ -20,7 +20,7 @@ function svgToDataUrl(svgString: string): string {
 }
 
 function buildExportSvg(opts: ExportOptions): string {
-  const recolored = recolorSvg(opts.svgContent, opts.logoColor);
+  const recolored = selectiveRecolorSvg(opts.svgContent, opts.logoColor, undefined, opts.svgGroups);
   const parser = new DOMParser();
   const doc = parser.parseFromString(recolored, "image/svg+xml");
   const svgEl = doc.querySelector("svg");
@@ -110,7 +110,7 @@ function getDimensions(svgContent: string, size: number): { width: number; heigh
  * Build a DOM SVG element for vector PDF export via svg2pdf.js
  */
 function buildSvgElement(opts: ExportOptions, width: number, height: number): SVGSVGElement {
-  const recolored = recolorSvg(opts.svgContent, opts.logoColor);
+  const recolored = selectiveRecolorSvg(opts.svgContent, opts.logoColor, undefined, opts.svgGroups);
   const parser = new DOMParser();
   const doc = parser.parseFromString(recolored, "image/svg+xml");
   const svgEl = doc.querySelector("svg")!;
@@ -222,10 +222,7 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
       return new Promise((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
     }
     case "pdf": {
-      const pdfOpts = opts.transparent
-        ? { ...opts, transparent: false, bgColor: "#FFFFFF" }
-        : opts;
-      const svgElement = buildSvgElement(pdfOpts, width, height);
+      const svgElement = buildSvgElement(opts, width, height);
       try {
         const orientation = totalW >= totalH ? "landscape" : "portrait";
         const pdf = new jsPDF({ orientation, unit: "px", format: [totalW, totalH] });

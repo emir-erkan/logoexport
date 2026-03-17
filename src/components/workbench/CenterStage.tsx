@@ -250,6 +250,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           projectName={projectName}
           fileType={loadedFiles[exportTarget.fileIdx].type}
           fit={fit}
+          svgGroups={svgGroups}
         />
       )}
     </div>

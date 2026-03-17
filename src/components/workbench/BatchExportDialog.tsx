@@ -11,6 +11,7 @@ import { exportAsset } from "@/lib/export-utils";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import type { SvgGroup } from "@/lib/svg-group-utils";
 
 interface BatchExportDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface BatchExportDialogProps {
   projectName: string;
   fileType?: "svg" | "png";
   fit?: "fit" | "padded";
+  svgGroups?: SvgGroup[];
 }
 
 const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
@@ -33,6 +35,7 @@ export function BatchExportDialog({
   projectName,
   fileType = "svg",
   fit = "padded",
+  svgGroups,
 }: BatchExportDialogProps) {
   const isSvg = fileType === "svg";
   const availableFormats = isSvg ? FORMATS : (["png", "jpg", "pdf"] as const);
@@ -72,6 +75,7 @@ export function BatchExportDialog({
           fileName: projectName,
           fileType,
           padded: fit === "padded",
+          svgGroups,
         });
 
         const bgLabel = isTransparentBg ? "transparent" : combo.bc.replace("#", "");
