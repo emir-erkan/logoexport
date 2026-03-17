@@ -18,6 +18,7 @@ interface ExportDialogProps {
   svgContent: string;
   projectName: string;
   fileType?: "svg" | "png";
+  fit?: "fit" | "padded";
 }
 
 const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
@@ -31,16 +32,18 @@ export function ExportDialog({
   svgContent,
   projectName,
   fileType = "svg",
+  fit = "padded",
 }: ExportDialogProps) {
   const isSvg = fileType === "svg";
   const availableFormats = isSvg ? FORMATS : (["png", "jpg", "pdf"] as const);
   const [format, setFormat] = useState<typeof FORMATS[number]>(isSvg ? "png" : "png");
-  const [transparent, setTransparent] = useState(false);
+  const [transparent, setTransparent] = useState(bgColor === "transparent");
   const [size, setSize] = useState(1024);
   const [customSize, setCustomSize] = useState("");
   const [exporting, setExporting] = useState(false);
 
   const transparentAvailable = format === "svg" || format === "png";
+  const isTransparentBg = bgColor === "transparent";
 
   const handleExport = async () => {
     setExporting(true);
@@ -50,18 +53,21 @@ export function ExportDialog({
         toast.error("Size must be between 16 and 8192px");
         return;
       }
+      const effectiveTransparent = isTransparentBg || (transparentAvailable && transparent);
       const blob = await exportAsset({
         format,
-        transparent: transparentAvailable ? transparent : false,
+        transparent: effectiveTransparent,
         size: finalSize,
         logoColor,
-        bgColor,
+        bgColor: isTransparentBg ? "#FFFFFF" : bgColor,
         svgContent,
         fileName: projectName,
         fileType,
+        padded: fit === "padded",
       });
       const ext = format;
-      downloadBlob(blob, `${projectName}-${logoColor.replace("#", "")}-on-${bgColor.replace("#", "")}.${ext}`);
+      const bgLabel = effectiveTransparent ? "transparent" : bgColor.replace("#", "");
+      downloadBlob(blob, `${projectName}-${logoColor.replace("#", "")}-on-${bgLabel}.${ext}`);
       toast.success("Exported!");
       onOpenChange(false);
     } catch (err: any) {
@@ -99,31 +105,33 @@ export function ExportDialog({
           </div>
 
           {/* Background */}
-          <div>
-            <p className="mb-2 text-xs text-muted-foreground uppercase tracking-widest">Background</p>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setTransparent(false)}
-                className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                  !transparent ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                Solid
-              </button>
-              <button
-                onClick={() => setTransparent(true)}
-                disabled={!transparentAvailable}
-                className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                  transparent ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-accent"
-                } disabled:opacity-30 disabled:cursor-not-allowed`}
-              >
-                Transparent
-              </button>
+          {!isTransparentBg && (
+            <div>
+              <p className="mb-2 text-xs text-muted-foreground uppercase tracking-widest">Background</p>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setTransparent(false)}
+                  className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                    !transparent ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  Solid
+                </button>
+                <button
+                  onClick={() => setTransparent(true)}
+                  disabled={!transparentAvailable}
+                  className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                    transparent ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-accent"
+                  } disabled:opacity-30 disabled:cursor-not-allowed`}
+                >
+                  Transparent
+                </button>
+              </div>
+              {!transparentAvailable && (
+                <p className="mt-1 text-[10px] text-muted-foreground">Transparent only for SVG & PNG</p>
+              )}
             </div>
-            {!transparentAvailable && (
-              <p className="mt-1 text-[10px] text-muted-foreground">Transparent only for SVG & PNG</p>
-            )}
-          </div>
+          )}
 
           {/* Size */}
           <div>
