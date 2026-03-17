@@ -173,13 +173,14 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
         return new Promise((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
       }
       case "pdf": {
-        const pdfPadding = opts.padded ? Math.round(width * 0.1) : 0;
+        const pdfPadX = opts.padded ? Math.round(width * 0.1) : 0;
+        const pdfPadY = opts.padded ? Math.round(height * 0.1) : 0;
         const pdfCanvas = opts.transparent
           ? await renderImageToCanvas(opts.svgContent, width, height, "#FFFFFF", false, opts.padded)
           : canvas;
         const imgData = pdfCanvas.toDataURL("image/png");
-        const pdfW = width + pdfPadding * 2;
-        const pdfH = height + pdfPadding * 2;
+        const pdfW = width + pdfPadX * 2;
+        const pdfH = height + pdfPadY * 2;
         const orientation = pdfW >= pdfH ? "landscape" : "portrait";
         const pdf = new jsPDF({ orientation, unit: "px", format: [pdfW, pdfH] });
         pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
