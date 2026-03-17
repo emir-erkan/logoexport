@@ -182,17 +182,60 @@ export function selectiveRecolorSvg(
     return fullRecolor(svgString, newColor, uniquePrefix);
   }
 
+  // For groups using class-based styling from <style> blocks,
+  // we need to also recolor via the SVG root <style>
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgString, "image/svg+xml");
   const svgEl = doc.querySelector("svg");
   if (!svgEl) return svgString;
 
-  // Recolor only elements within recolorable groups
+  // Collect classes used in recolorable groups
+  const recolorableClasses = new Set<string>();
+  const preservedClasses = new Set<string>();
+  
+  const collectClasses = (el: Element, target: Set<string>) => {
+    const cls = el.getAttribute("class");
+    if (cls) cls.split(/\s+/).forEach(c => target.add(c));
+    for (const child of Array.from(el.children)) collectClasses(child, target);
+  };
+
+  recolorableIds.forEach((groupId) => {
+    const group = svgEl.querySelector(`#${CSS.escape(groupId)}`);
+    if (group) collectClasses(group, recolorableClasses);
+  });
+  
+  detectedGroups.filter(g => !g.isRecolorable).forEach((g) => {
+    const group = svgEl.querySelector(`#${CSS.escape(g.id)}`);
+    if (group) collectClasses(group, preservedClasses);
+  });
+
+  // Remove classes that are shared with preserved groups
+  preservedClasses.forEach(c => recolorableClasses.delete(c));
+
+  // Recolor inline attributes in recolorable groups
   recolorableIds.forEach((groupId) => {
     const group = svgEl.querySelector(`#${CSS.escape(groupId)}`);
     if (!group) return;
     recolorElement(group, newColor);
   });
+
+  // Recolor CSS rules for classes only used in recolorable groups
+  const styleEl = svgEl.querySelector("style");
+  if (styleEl?.textContent && recolorableClasses.size > 0) {
+    let css = styleEl.textContent;
+    recolorableClasses.forEach(cls => {
+      const escaped = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      css = css.replace(
+        new RegExp(`(\\.${escaped}\\s*\\{[^}]*?)fill:\\s*(?!none|transparent)[^;}"]+`, 'gi'),
+        `$1fill: ${newColor}`
+      );
+      css = css.replace(
+        new RegExp(`(\\.${escaped}\\s*\\{[^}]*?)stroke:\\s*(?!none|transparent)[^;}"]+`, 'gi'),
+        `$1stroke: ${newColor}`
+      );
+    });
+    styleEl.textContent = css;
+  }
 
   let result = new XMLSerializer().serializeToString(svgEl);
 
