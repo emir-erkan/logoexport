@@ -170,14 +170,16 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
         return new Promise((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
       }
       case "pdf": {
-        // PNG source: still raster in PDF (no vector data available)
+        const pdfPadding = opts.padded ? Math.round(width * 0.1) : 0;
         const pdfCanvas = opts.transparent
-          ? await renderImageToCanvas(opts.svgContent, width, height, "#FFFFFF", false)
+          ? await renderImageToCanvas(opts.svgContent, width, height, "#FFFFFF", false, opts.padded)
           : canvas;
         const imgData = pdfCanvas.toDataURL("image/png");
-        const orientation = width >= height ? "landscape" : "portrait";
-        const pdf = new jsPDF({ orientation, unit: "px", format: [width, height] });
-        pdf.addImage(imgData, "PNG", 0, 0, width, height);
+        const pdfW = width + pdfPadding * 2;
+        const pdfH = height + pdfPadding * 2;
+        const orientation = pdfW >= pdfH ? "landscape" : "portrait";
+        const pdf = new jsPDF({ orientation, unit: "px", format: [pdfW, pdfH] });
+        pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
         return pdf.output("blob");
       }
       default:
