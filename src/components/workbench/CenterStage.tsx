@@ -61,6 +61,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
   }, [activeFile]);
 
   const hasSelectiveRecolor = svgGroups.length > 0 && svgGroups.some(g => g.isRecolorable) && svgGroups.some(g => !g.isRecolorable);
+  const canRecolorLogo = activeFile?.type === "svg" ? hasRecolorableContent(svgGroups) : false;
 
   const fitClassLarge = fit === "fit" ? "p-0" : "p-8 sm:p-12";
 
