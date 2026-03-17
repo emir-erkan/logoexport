@@ -7,7 +7,6 @@ import type { LoadedFile } from "./CenterStage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ProjectColor = Tables<"project_colors">;
-
 type Fit = "fit" | "padded";
 
 interface GalleryViewProps {
@@ -18,7 +17,6 @@ interface GalleryViewProps {
   fit: Fit;
 }
 
-// Checkerboard pattern for transparent bg preview
 const checkerStyle: React.CSSProperties = {
   backgroundImage:
     "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
@@ -41,7 +39,6 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
     [colors]
   );
 
-  // Include a "transparent" pseudo-entry
   const bgColorsWithTransparent = useMemo(() => {
     const transparent: ProjectColor = {
       id: "__transparent__",
@@ -55,7 +52,6 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
     return [transparent, ...bgColors];
   }, [bgColors]);
 
-  // When logo can't be recolored, use a single placeholder logo entry
   const effectiveLogoColors = useMemo(() => {
     if (!canRecolor) {
       return [{ id: "__original__", hex: "#000000", role: "logo", label: "Original", project_id: "", sort_order: 0, created_at: "" } as ProjectColor];
@@ -115,11 +111,7 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
       );
     }
     return (
-      <img
-        src={activeFile.content}
-        alt="Logo"
-        className="h-full w-full object-contain"
-      />
+      <img src={activeFile.content} alt="Logo" className="h-full w-full object-contain" />
     );
   };
 
@@ -136,7 +128,7 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Selection toolbar */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b bg-background/95 backdrop-blur px-4 py-2">
+      <div className="sticky top-0 z-10 flex items-center gap-3 border-b bg-background/95 backdrop-blur-md px-4 py-2.5">
         <button
           onClick={selected.size > 0 ? clearSelection : selectAll}
           className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -146,7 +138,7 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
         {selected.size > 0 && (
           <button
             onClick={() => setBatchOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
+            className="flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-1.5 text-xs font-semibold text-background transition-all hover:opacity-90 hover:shadow-md"
           >
             <Download className="h-3 w-3" /> Download ZIP ({selected.size})
           </button>
@@ -159,22 +151,14 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
             <section key={bg.id}>
               <div className="mb-4 flex items-center gap-3">
                 {bg.hex === "transparent" ? (
-                  <div
-                    className="h-5 w-5 rounded border"
-                    style={checkerStyle}
-                  />
+                  <div className="h-5 w-5 rounded-lg border" style={checkerStyle} />
                 ) : (
-                  <div
-                    className="h-5 w-5 rounded border"
-                    style={{ backgroundColor: bg.hex }}
-                  />
+                  <div className="h-5 w-5 rounded-lg border" style={{ backgroundColor: bg.hex }} />
                 )}
-                <h3 className="font-mono text-xs font-medium text-muted-foreground">
+                <h3 className="text-xs font-semibold text-muted-foreground">
                   {bg.hex === "transparent" ? "Transparent" : `Background ${bg.hex}`}
                   {bg.label && bg.hex !== "transparent" && (
-                    <span className="ml-2 font-sans text-muted-foreground/60">
-                      ({bg.label})
-                    </span>
+                    <span className="ml-2 text-muted-foreground/60">({bg.label})</span>
                   )}
                 </h3>
               </div>
@@ -191,10 +175,9 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
                   const isSelected = selected.has(key);
                   return (
                     <div key={`${logo.id}-${bg.id}`} className="group relative">
-                      {/* Selection checkbox */}
                       <button
                         onClick={() => toggleSelect(key)}
-                        className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
+                        className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-md border transition-all ${
                           isSelected
                             ? "border-foreground bg-foreground text-background"
                             : "border-muted-foreground/30 bg-background/80 opacity-0 group-hover:opacity-100"
@@ -203,40 +186,26 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
                         {isSelected && <Check className="h-3 w-3" />}
                       </button>
                       <div
-                        className={`flex aspect-square items-center justify-center rounded-lg transition-shadow group-hover:shadow-lg ${fitClass}`}
+                        className={`flex aspect-square items-center justify-center rounded-2xl transition-all group-hover:shadow-lg ${fitClass}`}
                         style={
-                          isTransparent
-                            ? checkerStyle
-                            : { backgroundColor: bg.hex }
+                          isTransparent ? checkerStyle : { backgroundColor: bg.hex }
                         }
                       >
-                        {renderLogo(
-                          logo.hex,
-                          bg.hex,
-                          `gallery-${fileIdx}-${logo.id}-${bg.id}`
-                        )}
+                        {renderLogo(logo.hex, bg.hex, `gallery-${fileIdx}-${logo.id}-${bg.id}`)}
                       </div>
                       <div className="mt-2 flex items-center justify-between">
                         {canRecolor && (
                           <div className="flex items-center gap-1.5">
-                            <div
-                              className="h-3 w-3 rounded-sm border"
-                              style={{ backgroundColor: logo.hex }}
-                            />
-                            <span className="font-mono text-[10px] text-muted-foreground">
-                              {logo.hex}
-                            </span>
+                            <div className="h-3 w-3 rounded-sm border" style={{ backgroundColor: logo.hex }} />
+                            <span className="font-mono text-[10px] text-muted-foreground">{logo.hex}</span>
                           </div>
                         )}
                         {!canRecolor && (
-                          <span className="font-mono text-[10px] text-muted-foreground">Original</span>
+                          <span className="text-[10px] text-muted-foreground">Original</span>
                         )}
                         {level && (
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[10px] font-medium ${badgeColors[level]}`}
-                          >
-                            {ratio.toFixed(1)}:1{" "}
-                            <span className="font-sans">{level}</span>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium ${badgeColors[level]}`}>
+                            {ratio.toFixed(1)}:1 <span className="font-sans">{level}</span>
                           </span>
                         )}
                       </div>

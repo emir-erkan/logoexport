@@ -74,11 +74,7 @@ export default function Workbench() {
     const { data } = await supabase.from("project_files").select("*").eq("project_id", id);
     const fileList = data || [];
     setFiles(fileList);
-
-    // Load all file contents for the matrix view
     await loadAllFileContents(fileList);
-
-    // Auto-select first file if none selected
     if (fileList.length > 0 && !selectedFileId) {
       setSelectedFileId(fileList[0].id);
       await loadSingleFileContent(fileList[0]);
@@ -150,9 +146,9 @@ export default function Workbench() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      <header className="flex h-12 items-center justify-between border-b px-3">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/projects")}>
+      <header className="flex h-14 items-center justify-between border-b px-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => navigate("/projects")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           {editing ? (
@@ -162,18 +158,18 @@ export default function Workbench() {
               onChange={(e) => setProjectName(e.target.value)}
               onBlur={updateName}
               onKeyDown={(e) => e.key === "Enter" && updateName()}
-              className="h-7 w-48 text-sm"
+              className="h-8 w-48 rounded-lg text-sm"
             />
           ) : (
             <button
               onClick={() => setEditing(true)}
-              className="text-sm font-medium text-foreground hover:text-foreground/70 transition-colors"
+              className="text-sm font-semibold text-foreground hover:text-foreground/70 transition-colors"
             >
               {project.name}
             </button>
           )}
         </div>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={copyShareLink}>
+        <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-xl text-xs" onClick={copyShareLink}>
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? "Copied" : "Share"}
         </Button>

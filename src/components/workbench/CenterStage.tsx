@@ -25,7 +25,6 @@ interface CenterStageProps {
 type Fit = "fit" | "padded";
 type ViewMode = "manual" | "gallery";
 
-// Checkerboard for transparent bg
 const checkerStyle: React.CSSProperties = {
   backgroundImage:
     "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
@@ -103,59 +102,57 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Controls bar */}
-      <div className="flex items-center justify-center gap-4 border-b px-4 py-3">
-        {/* View mode toggle */}
-        <div className="flex rounded-lg bg-muted p-0.5">
+      <div className="flex items-center justify-center gap-3 border-b px-4 py-3">
+        <div className="flex rounded-xl bg-muted p-1">
           <button
             onClick={() => setViewMode("manual")}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               viewMode === "manual" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Palette className="h-3 w-3" /> Manual
+            <Palette className="h-3.5 w-3.5" /> Manual
           </button>
           <button
             onClick={() => setViewMode("gallery")}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               viewMode === "gallery" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <LayoutGrid className="h-3 w-3" /> Gallery
+            <LayoutGrid className="h-3.5 w-3.5" /> Gallery
           </button>
         </div>
 
-        {/* Fit toggle — available in both views */}
-        <div className="flex rounded-lg bg-muted p-0.5">
+        <div className="flex rounded-xl bg-muted p-1">
           <button
             onClick={() => setFit("fit")}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               fit === "fit" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Maximize className="h-3 w-3" /> Fit
+            <Maximize className="h-3.5 w-3.5" /> Fit
           </button>
           <button
             onClick={() => setFit("padded")}
-            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               fit === "padded" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Frame className="h-3 w-3" /> Padded
+            <Frame className="h-3.5 w-3.5" /> Padded
           </button>
         </div>
       </div>
 
       {/* File selector */}
       {loadedFiles.length > 1 && (
-        <div className="flex flex-wrap gap-1.5 border-b px-4 py-2">
+        <div className="flex flex-wrap gap-1.5 border-b px-4 py-2.5">
           {loadedFiles.map((lf, idx) => (
             <button
               key={lf.file.id}
               onClick={() => setSelectedFileIdx(idx)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 selectedFileIdx === idx
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background shadow-sm"
+                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
             >
               {lf.file.file_name.replace(/\.\w+$/, "")}
@@ -163,7 +160,6 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           ))}
         </div>
       )}
-
 
       {viewMode === "gallery" && activeFile ? (
         <GalleryView
@@ -174,9 +170,9 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           fit={fit}
         />
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 sm:gap-6 overflow-y-auto p-4 sm:p-8">
+        <div className="flex flex-1 flex-col items-center justify-center gap-5 sm:gap-6 overflow-y-auto p-4 sm:p-8">
           <div
-            className={`flex aspect-square w-full max-w-md items-center justify-center rounded-lg transition-colors duration-200 ${fitClassLarge}`}
+            className={`flex aspect-square w-full max-w-md items-center justify-center rounded-2xl transition-colors duration-200 ${fitClassLarge}`}
             style={
               transparentBg
                 ? checkerStyle
@@ -189,14 +185,14 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             {canRecolorLogo && (
               <div>
-                <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Logo</p>
-                <div className="flex flex-wrap gap-1.5">
+                <p className="mb-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Logo</p>
+                <div className="flex flex-wrap gap-2">
                   {logoColors.map((c) => (
                     <button
                       key={c.id}
                       onClick={() => setSelectedLogo(c.hex)}
-                      className={`h-8 w-8 rounded transition-all ${
-                        activeLogo === c.hex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
+                      className={`h-9 w-9 rounded-xl transition-all ${
+                        activeLogo === c.hex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110" : "hover:scale-110"
                       }`}
                       style={{ backgroundColor: c.hex }}
                     />
@@ -205,13 +201,12 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
               </div>
             )}
             <div>
-              <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Background</p>
-              <div className="flex flex-wrap gap-1.5">
-                {/* Transparent option */}
+              <p className="mb-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Background</p>
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => { setTransparentBg(true); setSelectedBg(null); }}
-                  className={`h-8 w-8 rounded border transition-all ${
-                    transparentBg ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
+                  className={`h-9 w-9 rounded-xl border transition-all ${
+                    transparentBg ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110" : "hover:scale-110"
                   }`}
                   style={checkerStyle}
                   title="Transparent"
@@ -220,8 +215,8 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
                   <button
                     key={c.id}
                     onClick={() => { setTransparentBg(false); setSelectedBg(c.hex); }}
-                    className={`h-8 w-8 rounded transition-all ${
-                      !transparentBg && activeBg === c.hex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
+                    className={`h-9 w-9 rounded-xl transition-all ${
+                      !transparentBg && activeBg === c.hex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110" : "hover:scale-110"
                     }`}
                     style={{ backgroundColor: c.hex }}
                   />
@@ -231,7 +226,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           </div>
           <button
             onClick={() => setExportTarget({ logo: activeLogo, bg: activeBg, fileIdx: selectedFileIdx })}
-            className="flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-xs font-medium text-background transition-opacity hover:opacity-80"
+            className="flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-xs font-semibold text-background transition-all hover:opacity-90 hover:shadow-md"
           >
             <Download className="h-3.5 w-3.5" /> Export
           </button>
@@ -260,13 +255,13 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
 function Footer() {
   return (
     <div className="border-t px-4 py-3 text-center">
-      <p className="text-[10px] text-muted-foreground/50">
+      <p className="text-[10px] text-muted-foreground/40">
         Made by{" "}
         <a
           href="https://emirerkan.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-muted-foreground/70 underline-offset-2 hover:underline hover:text-muted-foreground transition-colors"
+          className="text-muted-foreground/60 underline-offset-2 hover:underline hover:text-muted-foreground transition-colors"
         >
           emirerkan.com
         </a>
@@ -284,7 +279,7 @@ function ContrastBadge({ logo, bg }: { logo: string; bg: string }) {
     Weak: "bg-red-500/10 text-red-500",
   };
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-xs font-medium ${badgeColors[level]}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-medium ${badgeColors[level]}`}>
       {ratio.toFixed(1)}:1 <span className="font-sans">{level}</span>
     </span>
   );
