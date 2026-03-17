@@ -36,6 +36,7 @@ export function BatchExportDialog({
   projectName,
   fileType = "svg",
   fit = "padded",
+  svgGroups,
 }: BatchExportDialogProps) {
   const isSvg = fileType === "svg";
   const availableFormats = isSvg ? FORMATS : (["png", "jpg", "pdf"] as const);
