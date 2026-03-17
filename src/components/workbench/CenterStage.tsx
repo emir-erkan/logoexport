@@ -195,7 +195,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           </div>
           {activeFile?.type === "svg" && !transparentBg && <ContrastBadge logo={activeLogo} bg={activeBg} />}
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-            {activeFile?.type === "svg" && (
+            {canRecolorLogo && (
               <div>
                 <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Logo</p>
                 <div className="flex flex-wrap gap-1.5">

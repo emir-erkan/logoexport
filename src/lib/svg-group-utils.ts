@@ -6,6 +6,15 @@
  * vs. preserved (multi-color).
  */
 
+/**
+ * Check if an SVG has any recolorable content based on its groups.
+ * Returns false if the SVG is entirely multi-color / preserved groups.
+ */
+export function hasRecolorableContent(groups: SvgGroup[]): boolean {
+  if (groups.length === 0) return true; // No groups = full recolor fallback
+  return groups.some(g => g.isRecolorable);
+}
+
 export interface SvgGroup {
   id: string;
   uniqueColors: string[];
