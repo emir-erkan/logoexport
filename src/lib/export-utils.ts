@@ -12,6 +12,7 @@ export interface ExportOptions {
   fileName: string;
   fileType?: "svg" | "png";
   padded?: boolean;
+  svgGroups?: SvgGroup[];
 }
 
 function svgToDataUrl(svgString: string): string {
