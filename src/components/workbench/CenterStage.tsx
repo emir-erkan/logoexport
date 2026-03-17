@@ -64,6 +64,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
   const canRecolorLogo = activeFile?.type === "svg" ? hasRecolorableContent(svgGroups) : false;
 
   const fitClassLarge = fit === "fit" ? "p-0" : "p-8 sm:p-12";
+  const aspectClass = fit === "fit" ? "" : "aspect-square max-w-md";
 
   if (loadedFiles.length === 0) {
     return (
@@ -191,7 +192,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 sm:gap-6 overflow-y-auto p-4 sm:p-8">
           <div
-            className={`flex aspect-square w-full max-w-md items-center justify-center rounded-lg transition-colors duration-200 ${fitClassLarge}`}
+            className={`flex w-full items-center justify-center rounded-lg transition-colors duration-200 ${aspectClass} ${fitClassLarge} ${fit === "fit" ? "flex-1" : ""}`}
             style={
               transparentBg
                 ? checkerStyle
