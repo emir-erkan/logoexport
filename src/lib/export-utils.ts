@@ -9,9 +9,10 @@ export interface ExportOptions {
   size: number;
   logoColor: string;
   bgColor: string;
-  svgContent: string; // SVG string or image URL for PNG
+  svgContent: string;
   fileName: string;
   fileType?: "svg" | "png";
+  padded?: boolean;
 }
 
 function svgToDataUrl(svgString: string): string {
