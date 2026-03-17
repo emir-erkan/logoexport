@@ -31,9 +31,10 @@ function buildExportSvg(opts: ExportOptions): string {
   const aspectRatio = vbH / vbW;
   const width = opts.size;
   const height = Math.round(width * aspectRatio);
-  const padding = opts.padded ? Math.round(width * 0.1) : 0;
-  const totalW = width + padding * 2;
-  const totalH = height + padding * 2;
+  const padX = opts.padded ? Math.round(width * 0.1) : 0;
+  const padY = opts.padded ? Math.round(height * 0.1) : 0;
+  const totalW = width + padX * 2;
+  const totalH = height + padY * 2;
 
   if (opts.transparent && !opts.padded) {
     svgEl.setAttribute("width", String(width));
