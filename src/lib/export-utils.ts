@@ -31,17 +31,21 @@ function buildExportSvg(opts: ExportOptions): string {
   const aspectRatio = vbH / vbW;
   const width = opts.size;
   const height = Math.round(width * aspectRatio);
+  const padding = opts.padded ? Math.round(width * 0.1) : 0;
+  const totalW = width + padding * 2;
+  const totalH = height + padding * 2;
 
-  if (opts.transparent) {
+  if (opts.transparent && !opts.padded) {
     svgEl.setAttribute("width", String(width));
     svgEl.setAttribute("height", String(height));
     return new XMLSerializer().serializeToString(svgEl);
   }
 
   const innerSvg = new XMLSerializer().serializeToString(svgEl);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <rect width="${width}" height="${height}" fill="${opts.bgColor}" />
-    <svg x="0" y="0" width="${width}" height="${height}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>
+  const bgRect = opts.transparent ? "" : `<rect width="${totalW}" height="${totalH}" fill="${opts.bgColor}" />`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">
+    ${bgRect}
+    <svg x="${padding}" y="${padding}" width="${width}" height="${height}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>
   </svg>`;
 }
 
