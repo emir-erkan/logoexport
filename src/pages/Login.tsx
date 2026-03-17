@@ -56,7 +56,7 @@ export default function Login() {
             className="h-11 bg-card font-mono text-sm"
           />
           <Button type="submit" className="h-11 w-full" disabled={loading}>
-            {loading ? "..." : isSignUp ? "Create account" : "Sign in"}
+            {loading ? "..." : "Sign in"}
           </Button>
         </form>
       </div>
