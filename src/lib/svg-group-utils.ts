@@ -181,8 +181,13 @@ export function selectiveRecolorSvg(
     detectedGroups.filter((g) => g.isRecolorable).map((g) => g.id)
   );
 
-  // If all groups are recolorable or none are, fall back to full recolor
-  if (recolorableIds.size === 0 || recolorableIds.size === detectedGroups.length) {
+  // If none are recolorable, return SVG as-is (only bg changes apply)
+  if (recolorableIds.size === 0) {
+    return uniquePrefix ? deduplicateIds(svgString, uniquePrefix) : svgString;
+  }
+
+  // If all groups are recolorable, fall back to full recolor
+  if (recolorableIds.size === detectedGroups.length) {
     return fullRecolor(svgString, newColor, uniquePrefix);
   }
 
