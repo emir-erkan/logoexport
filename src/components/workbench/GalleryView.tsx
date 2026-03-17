@@ -123,7 +123,7 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
     );
   };
 
-  if (logoColors.length === 0 || bgColorsWithTransparent.length === 0) {
+  if (effectiveLogoColors.length === 0 || bgColorsWithTransparent.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <p className="text-sm text-muted-foreground">
