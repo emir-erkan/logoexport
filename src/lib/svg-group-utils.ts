@@ -56,6 +56,18 @@ function extractColorsFromElement(element: Element): string[] {
   const colors = new Set<string>();
   
   const processElement = (el: Element) => {
+    // Check for <style> blocks within the element
+    if (el.tagName.toLowerCase() === "style" && el.textContent) {
+      const cssColors = el.textContent.match(/(?:fill|stroke):\s*([^;}"]+)/gi) || [];
+      cssColors.forEach((match) => {
+        const val = match.replace(/^(?:fill|stroke):\s*/i, "").trim();
+        if (val !== "none" && val !== "transparent" && !val.startsWith("url(")) {
+          colors.add(normalizeColor(val));
+        }
+      });
+      return;
+    }
+
     // Check attributes
     const fill = el.getAttribute("fill");
     if (fill && fill !== "none" && fill !== "transparent" && !fill.startsWith("url(")) {
@@ -84,6 +96,9 @@ function extractColorsFromElement(element: Element): string[] {
       }
     }
 
+    // Check class-based colors by looking at computed style won't work in DOMParser
+    // So also check for class attribute - colors may come from SVG-level <style>
+    
     // Recurse children
     for (const child of Array.from(el.children)) {
       processElement(child);
@@ -91,6 +106,47 @@ function extractColorsFromElement(element: Element): string[] {
   };
 
   processElement(element);
+  
+  // Also extract colors from the SVG root <style> that apply to classes used in this element
+  const root = element.ownerDocument?.querySelector("svg");
+  if (root) {
+    const styleEl = root.querySelector("style");
+    if (styleEl?.textContent) {
+      // Find all classes used in this element's subtree
+      const usedClasses = new Set<string>();
+      const collectClasses = (el: Element) => {
+        const cls = el.getAttribute("class");
+        if (cls) cls.split(/\s+/).forEach(c => usedClasses.add(c));
+        for (const child of Array.from(el.children)) collectClasses(child);
+      };
+      collectClasses(element);
+      
+      // Parse CSS rules for those classes
+      const css = styleEl.textContent;
+      usedClasses.forEach(cls => {
+        const escaped = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const ruleMatch = css.match(new RegExp(`\\.${escaped}\\s*\\{([^}]+)\\}`, 'i'));
+        if (ruleMatch) {
+          const declarations = ruleMatch[1];
+          const fillM = declarations.match(/fill:\s*([^;}"]+)/i);
+          if (fillM) {
+            const val = fillM[1].trim();
+            if (val !== "none" && val !== "transparent" && !val.startsWith("url(")) {
+              colors.add(normalizeColor(val));
+            }
+          }
+          const strokeM = declarations.match(/stroke:\s*([^;}"]+)/i);
+          if (strokeM) {
+            const val = strokeM[1].trim();
+            if (val !== "none" && val !== "transparent" && !val.startsWith("url(")) {
+              colors.add(normalizeColor(val));
+            }
+          }
+        }
+      });
+    }
+  }
+
   return Array.from(colors);
 }
 
