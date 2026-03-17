@@ -6,6 +6,15 @@
  * vs. preserved (multi-color).
  */
 
+/**
+ * Check if an SVG has any recolorable content based on its groups.
+ * Returns false if the SVG is entirely multi-color / preserved groups.
+ */
+export function hasRecolorableContent(groups: SvgGroup[]): boolean {
+  if (groups.length === 0) return true; // No groups = full recolor fallback
+  return groups.some(g => g.isRecolorable);
+}
+
 export interface SvgGroup {
   id: string;
   uniqueColors: string[];
@@ -38,11 +47,15 @@ export function detectSvgGroups(svgString: string): SvgGroup[] {
     // Skip Illustrator metadata groups
     if (id.startsWith("_x") || id === "Layer_1" || id === "Layer_2") return;
 
+    // Force non-recolorable if name suggests it's a colorful/multicolor asset
+    const colorKeywords = /colou?rful|colou?r|renkli|multicolou?r|rgb|chromatic/i;
+    const forcePreserve = colorKeywords.test(id);
+
     const colors = extractColorsFromElement(g);
     groups.push({
       id,
       uniqueColors: colors,
-      isRecolorable: colors.length <= 1,
+      isRecolorable: forcePreserve ? false : colors.length <= 1,
     });
   });
 
@@ -177,8 +190,13 @@ export function selectiveRecolorSvg(
     detectedGroups.filter((g) => g.isRecolorable).map((g) => g.id)
   );
 
-  // If all groups are recolorable or none are, fall back to full recolor
-  if (recolorableIds.size === 0 || recolorableIds.size === detectedGroups.length) {
+  // If none are recolorable, return SVG as-is (only bg changes apply)
+  if (recolorableIds.size === 0) {
+    return uniquePrefix ? deduplicateIds(svgString, uniquePrefix) : svgString;
+  }
+
+  // If all groups are recolorable, fall back to full recolor
+  if (recolorableIds.size === detectedGroups.length) {
     return fullRecolor(svgString, newColor, uniquePrefix);
   }
 

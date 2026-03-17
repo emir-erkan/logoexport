@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { recolorSvg, contrastRatio, wcagLevel } from "@/lib/color-utils";
-import { selectiveRecolorSvg, detectSvgGroups, type SvgGroup } from "@/lib/svg-group-utils";
+import { selectiveRecolorSvg, detectSvgGroups, hasRecolorableContent, type SvgGroup } from "@/lib/svg-group-utils";
 import { ExportDialog } from "./ExportDialog";
 import { GalleryView } from "./GalleryView";
 import { Download, Maximize, Frame, Palette, LayoutGrid } from "lucide-react";
@@ -61,6 +61,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
   }, [activeFile]);
 
   const hasSelectiveRecolor = svgGroups.length > 0 && svgGroups.some(g => g.isRecolorable) && svgGroups.some(g => !g.isRecolorable);
+  const canRecolorLogo = activeFile?.type === "svg" ? hasRecolorableContent(svgGroups) : false;
 
   const fitClassLarge = fit === "fit" ? "p-0" : "p-8 sm:p-12";
 
@@ -171,6 +172,13 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           </span>
         </div>
       )}
+      {!canRecolorLogo && activeFile?.type === "svg" && viewMode === "manual" && (
+        <div className="flex items-center justify-center gap-2 border-b px-4 py-2">
+          <span className="text-[10px] text-muted-foreground">
+            Colorful asset detected — only background can be changed
+          </span>
+        </div>
+      )}
 
       {viewMode === "gallery" && activeFile ? (
         <GalleryView
@@ -194,7 +202,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           </div>
           {activeFile?.type === "svg" && !transparentBg && <ContrastBadge logo={activeLogo} bg={activeBg} />}
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-            {activeFile?.type === "svg" && (
+            {canRecolorLogo && (
               <div>
                 <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Logo</p>
                 <div className="flex flex-wrap gap-1.5">

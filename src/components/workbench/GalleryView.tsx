@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { contrastRatio, wcagLevel } from "@/lib/color-utils";
-import { selectiveRecolorSvg, type SvgGroup } from "@/lib/svg-group-utils";
+import { selectiveRecolorSvg, hasRecolorableContent, type SvgGroup } from "@/lib/svg-group-utils";
 import { BatchExportDialog } from "./BatchExportDialog";
 import { Download, Check } from "lucide-react";
 import type { LoadedFile } from "./CenterStage";
@@ -30,6 +30,8 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchOpen, setBatchOpen] = useState(false);
 
+  const canRecolor = activeFile.type === "svg" ? hasRecolorableContent(svgGroups) : false;
+
   const logoColors = useMemo(
     () => colors.filter((c) => c.role === "logo" || c.role === "both"),
     [colors]
@@ -53,18 +55,26 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
     return [transparent, ...bgColors];
   }, [bgColors]);
 
+  // When logo can't be recolored, use a single placeholder logo entry
+  const effectiveLogoColors = useMemo(() => {
+    if (!canRecolor) {
+      return [{ id: "__original__", hex: "#000000", role: "logo", label: "Original", project_id: "", sort_order: 0, created_at: "" } as ProjectColor];
+    }
+    return logoColors;
+  }, [canRecolor, logoColors]);
+
   const sections = useMemo(() => {
     return bgColorsWithTransparent.map((bg) => {
-      const combos = logoColors
+      const combos = effectiveLogoColors
         .map((logo) => ({
           logo,
           bg,
-          ratio: bg.hex === "transparent" ? 0 : contrastRatio(logo.hex, bg.hex),
+          ratio: bg.hex === "transparent" ? 0 : canRecolor ? contrastRatio(logo.hex, bg.hex) : 0,
         }))
         .sort((a, b) => b.ratio - a.ratio);
       return { bg, combos };
     });
-  }, [logoColors, bgColorsWithTransparent]);
+  }, [effectiveLogoColors, bgColorsWithTransparent, canRecolor]);
 
   const fitClass = fit === "fit" ? "p-0" : "p-6";
 
@@ -113,7 +123,7 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
     );
   };
 
-  if (logoColors.length === 0 || bgColorsWithTransparent.length === 0) {
+  if (effectiveLogoColors.length === 0 || bgColorsWithTransparent.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <p className="text-sm text-muted-foreground">
@@ -207,15 +217,20 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
                         )}
                       </div>
                       <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <div
-                            className="h-3 w-3 rounded-sm border"
-                            style={{ backgroundColor: logo.hex }}
-                          />
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            {logo.hex}
-                          </span>
-                        </div>
+                        {canRecolor && (
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className="h-3 w-3 rounded-sm border"
+                              style={{ backgroundColor: logo.hex }}
+                            />
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              {logo.hex}
+                            </span>
+                          </div>
+                        )}
+                        {!canRecolor && (
+                          <span className="font-mono text-[10px] text-muted-foreground">Original</span>
+                        )}
                         {level && (
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[10px] font-medium ${badgeColors[level]}`}
