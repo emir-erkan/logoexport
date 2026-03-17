@@ -172,6 +172,13 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           </span>
         </div>
       )}
+      {!canRecolorLogo && activeFile?.type === "svg" && viewMode === "manual" && (
+        <div className="flex items-center justify-center gap-2 border-b px-4 py-2">
+          <span className="text-[10px] text-muted-foreground">
+            Colorful asset detected — only background can be changed
+          </span>
+        </div>
+      )}
 
       {viewMode === "gallery" && activeFile ? (
         <GalleryView
