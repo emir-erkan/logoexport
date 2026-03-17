@@ -35,6 +35,7 @@ export function ExportDialog({
   projectName,
   fileType = "svg",
   fit = "padded",
+  svgGroups,
 }: ExportDialogProps) {
   const isSvg = fileType === "svg";
   const availableFormats = isSvg ? FORMATS : (["png", "jpg", "pdf"] as const);
