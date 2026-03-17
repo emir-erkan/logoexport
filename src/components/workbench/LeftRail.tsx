@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Upload, Image as ImageIcon, FileImage, Check } from "lucide-react";
+import { Plus, Trash2, Upload, Image as ImageIcon, FileImage, PanelLeftClose, PanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { isValidHex } from "@/lib/color-utils";
 import type { Tables } from "@/integrations/supabase/types";
@@ -22,7 +22,6 @@ interface LeftRailProps {
 }
 
 const ACCEPTED_TYPES = ".svg,.png";
-const ACCEPTED_MIME = ["image/svg+xml", "image/png"];
 
 function getFileType(fileName: string): "svg" | "png" {
   return fileName.toLowerCase().endsWith(".svg") ? "svg" : "png";
@@ -40,6 +39,7 @@ export function LeftRail({
 }: LeftRailProps) {
   const [uploading, setUploading] = useState(false);
   const [newHex, setNewHex] = useState("#");
+  const [collapsed, setCollapsed] = useState(false);
 
   const selectedFile = files.find((f) => f.id === selectedFileId) || null;
   const selectedFileType = selectedFile ? getFileType(selectedFile.file_name) : null;
@@ -135,119 +135,147 @@ export function LeftRail({
     </button>
   );
 
-  return (
-    <div className="flex h-full w-80 flex-col border-r bg-card">
-      {/* Logo Files */}
-      <div className="border-b p-4">
-        <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">Logo Files</p>
+  // Collapsed state: just show toggle button
+  if (collapsed) {
+    return (
+      <div className="flex h-full w-10 flex-col items-center border-r bg-card pt-3">
+        <button
+          onClick={() => setCollapsed(false)}
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <PanelLeft className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
 
-        {/* File list */}
-        {files.length > 0 && (
-          <div className="mb-3 space-y-1">
-            {files.map((f) => (
-              <div
-                key={f.id}
-                className={`flex items-center gap-2 rounded-lg border p-2 cursor-pointer transition-colors ${
-                  selectedFileId === f.id
-                    ? "border-foreground/30 bg-accent"
-                    : "border-transparent hover:bg-accent/50"
-                }`}
-                onClick={() => onFileSelect(f.id)}
-              >
-                <FileImage className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate font-mono text-xs text-foreground">{f.file_name}</span>
-                <span className="text-[10px] uppercase text-muted-foreground/50">
-                  {getFileType(f.file_name)}
-                </span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteFile(f.id, f.storage_path); }}
-                  className="text-muted-foreground/40 hover:text-destructive transition-colors"
+  return (
+    <>
+      {/* Mobile overlay backdrop */}
+      <div
+        className="fixed inset-0 z-30 bg-black/40 md:hidden"
+        onClick={() => setCollapsed(true)}
+      />
+      <div className="fixed inset-y-0 left-0 z-40 flex h-full w-72 flex-col border-r bg-card md:relative md:z-auto md:w-80">
+        {/* Collapse button */}
+        <div className="flex items-center justify-between border-b px-3 py-2">
+          <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Settings</p>
+          <button
+            onClick={() => setCollapsed(true)}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Logo Files */}
+        <div className="border-b p-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">Logo Files</p>
+
+          {files.length > 0 && (
+            <div className="mb-3 space-y-1">
+              {files.map((f) => (
+                <div
+                  key={f.id}
+                  className={`flex items-center gap-2 rounded-lg border p-2 cursor-pointer transition-colors ${
+                    selectedFileId === f.id
+                      ? "border-foreground/30 bg-accent"
+                      : "border-transparent hover:bg-accent/50"
+                  }`}
+                  onClick={() => onFileSelect(f.id)}
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <FileImage className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate font-mono text-xs text-foreground">{f.file_name}</span>
+                  <span className="text-[10px] uppercase text-muted-foreground/50">
+                    {getFileType(f.file_name)}
+                  </span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteFile(f.id, f.storage_path); }}
+                    className="text-muted-foreground/40 hover:text-destructive transition-colors"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedFile && fileContent && (
+            <div className="mb-3 overflow-hidden rounded-lg border">
+              <div className="checker-bg flex aspect-[3/2] w-full items-center justify-center p-4">
+                {selectedFileType === "svg" ? (
+                  <div dangerouslySetInnerHTML={{ __html: fileContent }} className="h-full w-full [&>svg]:h-full [&>svg]:w-full" />
+                ) : (
+                  <img src={fileContent} alt={selectedFile.file_name} className="h-full w-full object-contain" />
+                )}
+              </div>
+            </div>
+          )}
+
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="relative flex h-20 w-full cursor-pointer items-center justify-center rounded-lg border border-dashed transition-colors hover:border-foreground/20"
+          >
+            <div className="dot-grid flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground/40">
+              <ImageIcon className="h-5 w-5" />
+              <span className="text-[10px]">Drop SVG or PNG</span>
+            </div>
+            <input
+              type="file"
+              accept={ACCEPTED_TYPES}
+              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+              className="absolute inset-0 cursor-pointer opacity-0"
+            />
+            {uploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                <Upload className="h-5 w-5 animate-pulse text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Palette */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Palette</p>
+          <div className="space-y-2">
+            {colors.map((color) => (
+              <div key={color.id} className="flex items-center gap-2 rounded-lg border bg-background p-2">
+                <div
+                  className="h-8 w-8 shrink-0 rounded"
+                  style={{ backgroundColor: color.hex }}
+                />
+                <Input
+                  defaultValue={color.hex}
+                  onBlur={(e) => updateColorHex(color.id, e.target.value)}
+                  className="h-7 flex-1 border-0 bg-transparent px-1 font-mono text-xs"
+                />
+                <div className="flex gap-1">
+                  {roleButton(color, "logo", "L")}
+                  {roleButton(color, "background", "B")}
+                  {roleButton(color, "both", "✦")}
+                </div>
+                <button onClick={() => deleteColor(color.id)} className="text-muted-foreground/40 hover:text-destructive transition-colors">
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
           </div>
-        )}
 
-        {/* Preview of selected file */}
-        {selectedFile && fileContent && (
-          <div className="mb-3 overflow-hidden rounded-lg border">
-            <div className="checker-bg flex aspect-[3/2] w-full items-center justify-center p-4">
-              {selectedFileType === "svg" ? (
-                <div dangerouslySetInnerHTML={{ __html: fileContent }} className="h-full w-full [&>svg]:h-full [&>svg]:w-full" />
-              ) : (
-                <img src={fileContent} alt={selectedFile.file_name} className="h-full w-full object-contain" />
-              )}
-            </div>
+          <div className="mt-3 flex gap-2">
+            <Input
+              value={newHex}
+              onChange={(e) => setNewHex(e.target.value)}
+              placeholder="#000000"
+              className="h-8 flex-1 font-mono text-xs"
+              onKeyDown={(e) => e.key === "Enter" && addColor()}
+            />
+            <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={addColor}>
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
           </div>
-        )}
-
-        {/* Upload dropzone */}
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="relative flex h-20 w-full cursor-pointer items-center justify-center rounded-lg border border-dashed transition-colors hover:border-foreground/20"
-        >
-          <div className="dot-grid flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground/40">
-            <ImageIcon className="h-5 w-5" />
-            <span className="text-[10px]">Drop SVG or PNG</span>
-          </div>
-          <input
-            type="file"
-            accept={ACCEPTED_TYPES}
-            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-            className="absolute inset-0 cursor-pointer opacity-0"
-          />
-          {uploading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-              <Upload className="h-5 w-5 animate-pulse text-muted-foreground" />
-            </div>
-          )}
         </div>
       </div>
-
-      {/* Palette */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Palette</p>
-        <div className="space-y-2">
-          {colors.map((color) => (
-            <div key={color.id} className="flex items-center gap-2 rounded-lg border bg-background p-2">
-              <div
-                className="h-8 w-8 shrink-0 rounded"
-                style={{ backgroundColor: color.hex }}
-              />
-              <Input
-                defaultValue={color.hex}
-                onBlur={(e) => updateColorHex(color.id, e.target.value)}
-                className="h-7 flex-1 border-0 bg-transparent px-1 font-mono text-xs"
-              />
-              <div className="flex gap-1">
-                {roleButton(color, "logo", "L")}
-                {roleButton(color, "background", "B")}
-                {roleButton(color, "both", "✦")}
-              </div>
-              <button onClick={() => deleteColor(color.id)} className="text-muted-foreground/40 hover:text-destructive transition-colors">
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* Add color */}
-        <div className="mt-3 flex gap-2">
-          <Input
-            value={newHex}
-            onChange={(e) => setNewHex(e.target.value)}
-            placeholder="#000000"
-            className="h-8 flex-1 font-mono text-xs"
-            onKeyDown={(e) => e.key === "Enter" && addColor()}
-          />
-          <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={addColor}>
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
