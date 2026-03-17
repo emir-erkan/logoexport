@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { contrastRatio, wcagLevel } from "@/lib/color-utils";
-import { selectiveRecolorSvg, type SvgGroup } from "@/lib/svg-group-utils";
+import { selectiveRecolorSvg, hasRecolorableContent, type SvgGroup } from "@/lib/svg-group-utils";
 import { BatchExportDialog } from "./BatchExportDialog";
 import { Download, Check } from "lucide-react";
 import type { LoadedFile } from "./CenterStage";
