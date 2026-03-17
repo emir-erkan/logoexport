@@ -110,7 +110,7 @@ function getDimensions(svgContent: string, size: number): { width: number; heigh
  * Build a DOM SVG element for vector PDF export via svg2pdf.js
  */
 function buildSvgElement(opts: ExportOptions, width: number, height: number): SVGSVGElement {
-  const recolored = recolorSvg(opts.svgContent, opts.logoColor);
+  const recolored = selectiveRecolorSvg(opts.svgContent, opts.logoColor, undefined, opts.svgGroups);
   const parser = new DOMParser();
   const doc = parser.parseFromString(recolored, "image/svg+xml");
   const svgEl = doc.querySelector("svg")!;
