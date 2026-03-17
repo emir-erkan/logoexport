@@ -9,7 +9,7 @@ export default function Login() {
   const { user, signIn, signUp } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  
   const [loading, setLoading] = useState(false);
 
   if (user) return <Navigate to="/projects" replace />;
