@@ -320,6 +320,8 @@ function fullRecolor(svgString: string, newColor: string, uniquePrefix?: string)
 
 function deduplicateIds(svgString: string, uniquePrefix: string): string {
   let result = svgString;
+  
+  // Deduplicate element IDs
   const idMap = new Map<string, string>();
   result = result.replace(/\bid="([^"]+)"/g, (_match, id) => {
     const newId = `${uniquePrefix}_${id}`;
@@ -332,5 +334,26 @@ function deduplicateIds(svgString: string, uniquePrefix: string): string {
     result = result.replace(new RegExp(`href="#${escaped}"`, 'g'), `href="#${newId}"`);
     result = result.replace(new RegExp(`xlink:href="#${escaped}"`, 'g'), `xlink:href="#${newId}"`);
   }
+
+  // Deduplicate CSS class names to prevent style collisions between inline SVGs
+  const classMap = new Map<string, string>();
+  // Find all class definitions in <style> blocks
+  result = result.replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi, (_match, open, css, close) => {
+    let newCss = css.replace(/\.([a-zA-Z_][\w-]*)/g, (_m: string, cls: string) => {
+      if (!classMap.has(cls)) {
+        classMap.set(cls, `${uniquePrefix}_${cls}`);
+      }
+      return `.${classMap.get(cls)}`;
+    });
+    return open + newCss + close;
+  });
+  // Update class attribute references
+  if (classMap.size > 0) {
+    result = result.replace(/\bclass="([^"]+)"/g, (_match, classes) => {
+      const updated = classes.split(/\s+/).map((cls: string) => classMap.get(cls) || cls).join(" ");
+      return `class="${updated}"`;
+    });
+  }
+
   return result;
 }
