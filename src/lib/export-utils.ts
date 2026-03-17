@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
 import "svg2pdf.js";
-import { recolorSvg } from "./color-utils";
 import { selectiveRecolorSvg, type SvgGroup } from "./svg-group-utils";
 
 export interface ExportOptions {
