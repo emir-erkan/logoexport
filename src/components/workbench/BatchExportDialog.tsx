@@ -76,6 +76,7 @@ export function BatchExportDialog({
           fileName: projectName,
           fileType,
           padded: fit === "padded",
+          svgGroups,
         });
 
         const bgLabel = isTransparentBg ? "transparent" : combo.bc.replace("#", "");
