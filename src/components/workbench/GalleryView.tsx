@@ -217,15 +217,20 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups, fit }: Gal
                         )}
                       </div>
                       <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <div
-                            className="h-3 w-3 rounded-sm border"
-                            style={{ backgroundColor: logo.hex }}
-                          />
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            {logo.hex}
-                          </span>
-                        </div>
+                        {canRecolor && (
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className="h-3 w-3 rounded-sm border"
+                              style={{ backgroundColor: logo.hex }}
+                            />
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              {logo.hex}
+                            </span>
+                          </div>
+                        )}
+                        {!canRecolor && (
+                          <span className="font-mono text-[10px] text-muted-foreground">Original</span>
+                        )}
                         {level && (
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[10px] font-medium ${badgeColors[level]}`}
