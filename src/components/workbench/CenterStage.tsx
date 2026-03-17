@@ -158,7 +158,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
                   : "bg-muted text-muted-foreground hover:text-foreground"
               }`}
             >
-              {lf.file.file_name}
+              {lf.file.file_name.replace(/\.\w+$/, "")}
             </button>
           ))}
         </div>
