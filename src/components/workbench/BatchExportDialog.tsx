@@ -19,6 +19,7 @@ interface BatchExportDialogProps {
   svgContent: string;
   projectName: string;
   fileType?: "svg" | "png";
+  fit?: "fit" | "padded";
 }
 
 const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
@@ -31,6 +32,7 @@ export function BatchExportDialog({
   svgContent,
   projectName,
   fileType = "svg",
+  fit = "padded",
 }: BatchExportDialogProps) {
   const isSvg = fileType === "svg";
   const availableFormats = isSvg ? FORMATS : (["png", "jpg", "pdf"] as const);
@@ -58,18 +60,22 @@ export function BatchExportDialog({
 
       for (let i = 0; i < combos.length; i++) {
         const combo = combos[i];
+        const isTransparentBg = combo.bc === "transparent";
+        const effectiveTransparent = isTransparentBg || (transparentAvailable && transparent);
         const blob = await exportAsset({
           format,
-          transparent: transparentAvailable ? transparent : false,
+          transparent: effectiveTransparent,
           size: finalSize,
           logoColor: combo.lc,
-          bgColor: combo.bc,
+          bgColor: isTransparentBg ? "#FFFFFF" : combo.bc,
           svgContent,
           fileName: projectName,
           fileType,
+          padded: fit === "padded",
         });
 
-        const fileName = `${projectName}-${combo.lc.replace("#", "")}-on-${combo.bc.replace("#", "")}.${format}`;
+        const bgLabel = isTransparentBg ? "transparent" : combo.bc.replace("#", "");
+        const fileName = `${projectName}-${combo.lc.replace("#", "")}-on-${bgLabel}.${format}`;
         zip.file(fileName, blob);
         setProgress(Math.round(((i + 1) / combos.length) * 100));
       }

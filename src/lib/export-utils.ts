@@ -9,9 +9,10 @@ export interface ExportOptions {
   size: number;
   logoColor: string;
   bgColor: string;
-  svgContent: string; // SVG string or image URL for PNG
+  svgContent: string;
   fileName: string;
   fileType?: "svg" | "png";
+  padded?: boolean;
 }
 
 function svgToDataUrl(svgString: string): string {
@@ -30,17 +31,21 @@ function buildExportSvg(opts: ExportOptions): string {
   const aspectRatio = vbH / vbW;
   const width = opts.size;
   const height = Math.round(width * aspectRatio);
+  const padding = opts.padded ? Math.round(width * 0.1) : 0;
+  const totalW = width + padding * 2;
+  const totalH = height + padding * 2;
 
-  if (opts.transparent) {
+  if (opts.transparent && !opts.padded) {
     svgEl.setAttribute("width", String(width));
     svgEl.setAttribute("height", String(height));
     return new XMLSerializer().serializeToString(svgEl);
   }
 
   const innerSvg = new XMLSerializer().serializeToString(svgEl);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <rect width="${width}" height="${height}" fill="${opts.bgColor}" />
-    <svg x="0" y="0" width="${width}" height="${height}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>
+  const bgRect = opts.transparent ? "" : `<rect width="${totalW}" height="${totalH}" fill="${opts.bgColor}" />`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">
+    ${bgRect}
+    <svg x="${padding}" y="${padding}" width="${width}" height="${height}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>
   </svg>`;
 }
 
@@ -61,24 +66,27 @@ function renderToCanvas(svgString: string, width: number, height: number): Promi
   });
 }
 
-function renderImageToCanvas(imageUrl: string, width: number, height: number, bgColor: string, transparent: boolean): Promise<HTMLCanvasElement> {
+function renderImageToCanvas(imageUrl: string, width: number, height: number, bgColor: string, transparent: boolean, padded?: boolean): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
+      const padding = padded ? Math.round(width * 0.1) : 0;
+      const totalW = width + padding * 2;
+      const totalH = height + padding * 2;
       const canvas = document.createElement("canvas");
-      canvas.width = width * 2;
-      canvas.height = height * 2;
+      canvas.width = totalW * 2;
+      canvas.height = totalH * 2;
       const ctx = canvas.getContext("2d")!;
       ctx.scale(2, 2);
       if (!transparent) {
         ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(0, 0, totalW, totalH);
       }
       const scale = Math.min(width / img.naturalWidth, height / img.naturalHeight);
       const w = img.naturalWidth * scale;
       const h = img.naturalHeight * scale;
-      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
+      ctx.drawImage(img, padding + (width - w) / 2, padding + (height - h) / 2, w, h);
       resolve(canvas);
     };
     img.onerror = reject;
@@ -106,33 +114,33 @@ function buildSvgElement(opts: ExportOptions, width: number, height: number): SV
   const svgEl = doc.querySelector("svg")!;
 
   const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
+  const padding = opts.padded ? Math.round(width * 0.1) : 0;
+  const totalW = width + padding * 2;
+  const totalH = height + padding * 2;
 
-  // Create wrapper SVG at export dimensions
   const wrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   wrapper.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  wrapper.setAttribute("width", String(width));
-  wrapper.setAttribute("height", String(height));
-  wrapper.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  wrapper.setAttribute("width", String(totalW));
+  wrapper.setAttribute("height", String(totalH));
+  wrapper.setAttribute("viewBox", `0 0 ${totalW} ${totalH}`);
 
   if (!opts.transparent) {
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    rect.setAttribute("width", String(width));
-    rect.setAttribute("height", String(height));
+    rect.setAttribute("width", String(totalW));
+    rect.setAttribute("height", String(totalH));
     rect.setAttribute("fill", opts.bgColor);
     wrapper.appendChild(rect);
   }
 
-  // Nest the original SVG
   const inner = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  inner.setAttribute("x", "0");
-  inner.setAttribute("y", "0");
+  inner.setAttribute("x", String(padding));
+  inner.setAttribute("y", String(padding));
   inner.setAttribute("width", String(width));
   inner.setAttribute("height", String(height));
   inner.setAttribute("viewBox", viewBox);
   inner.innerHTML = svgEl.innerHTML;
   wrapper.appendChild(inner);
 
-  // Must be in DOM for svg2pdf to measure
   wrapper.style.position = "absolute";
   wrapper.style.left = "-9999px";
   document.body.appendChild(wrapper);
@@ -146,7 +154,7 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
   if (isPng) {
     const width = opts.size;
     const height = opts.size;
-    const canvas = await renderImageToCanvas(opts.svgContent, width, height, opts.bgColor, opts.transparent);
+    const canvas = await renderImageToCanvas(opts.svgContent, width, height, opts.bgColor, opts.transparent, opts.padded);
 
     switch (opts.format) {
       case "png":
@@ -162,14 +170,16 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
         return new Promise((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
       }
       case "pdf": {
-        // PNG source: still raster in PDF (no vector data available)
+        const pdfPadding = opts.padded ? Math.round(width * 0.1) : 0;
         const pdfCanvas = opts.transparent
-          ? await renderImageToCanvas(opts.svgContent, width, height, "#FFFFFF", false)
+          ? await renderImageToCanvas(opts.svgContent, width, height, "#FFFFFF", false, opts.padded)
           : canvas;
         const imgData = pdfCanvas.toDataURL("image/png");
-        const orientation = width >= height ? "landscape" : "portrait";
-        const pdf = new jsPDF({ orientation, unit: "px", format: [width, height] });
-        pdf.addImage(imgData, "PNG", 0, 0, width, height);
+        const pdfW = width + pdfPadding * 2;
+        const pdfH = height + pdfPadding * 2;
+        const orientation = pdfW >= pdfH ? "landscape" : "portrait";
+        const pdf = new jsPDF({ orientation, unit: "px", format: [pdfW, pdfH] });
+        pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
         return pdf.output("blob");
       }
       default:
@@ -179,13 +189,16 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
 
   // SVG source file
   const { width, height } = getDimensions(opts.svgContent, opts.size);
+  const padding = opts.padded ? Math.round(width * 0.1) : 0;
+  const totalW = width + padding * 2;
+  const totalH = height + padding * 2;
   const exportSvg = buildExportSvg(opts);
 
   switch (opts.format) {
     case "svg":
       return new Blob([exportSvg], { type: "image/svg+xml" });
     case "png": {
-      const canvas = await renderToCanvas(exportSvg, width, height);
+      const canvas = await renderToCanvas(exportSvg, totalW, totalH);
       return new Promise((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
     }
     case "jpg": {
@@ -193,7 +206,7 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
       if (opts.transparent) {
         jpgSvg = buildExportSvg({ ...opts, transparent: false, bgColor: "#FFFFFF" });
       }
-      const canvas = await renderToCanvas(jpgSvg, width, height);
+      const canvas = await renderToCanvas(jpgSvg, totalW, totalH);
       const tempCanvas = document.createElement("canvas");
       tempCanvas.width = canvas.width;
       tempCanvas.height = canvas.height;
@@ -204,18 +217,16 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
       return new Promise((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
     }
     case "pdf": {
-      // Vector PDF using svg2pdf.js
       const pdfOpts = opts.transparent
         ? { ...opts, transparent: false, bgColor: "#FFFFFF" }
         : opts;
       const svgElement = buildSvgElement(pdfOpts, width, height);
       try {
-        const orientation = width >= height ? "landscape" : "portrait";
-        const pdf = new jsPDF({ orientation, unit: "px", format: [width, height] });
-        await (pdf as any).svg(svgElement, { x: 0, y: 0, width, height });
+        const orientation = totalW >= totalH ? "landscape" : "portrait";
+        const pdf = new jsPDF({ orientation, unit: "px", format: [totalW, totalH] });
+        await (pdf as any).svg(svgElement, { x: 0, y: 0, width: totalW, height: totalH });
         return pdf.output("blob");
       } finally {
-        // Clean up DOM element
         if (svgElement.parentNode) {
           svgElement.parentNode.removeChild(svgElement);
         }

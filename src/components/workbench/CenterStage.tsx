@@ -25,11 +25,20 @@ interface CenterStageProps {
 type Fit = "fit" | "padded";
 type ViewMode = "manual" | "gallery";
 
+// Checkerboard for transparent bg
+const checkerStyle: React.CSSProperties = {
+  backgroundImage:
+    "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+  backgroundSize: "16px 16px",
+  backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+};
+
 export function CenterStage({ colors, loadedFiles, projectName, readOnly = false }: CenterStageProps) {
   const [fit, setFit] = useState<Fit>("padded");
   const [viewMode, setViewMode] = useState<ViewMode>("manual");
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [selectedBg, setSelectedBg] = useState<string | null>(null);
+  const [transparentBg, setTransparentBg] = useState(false);
   const [selectedFileIdx, setSelectedFileIdx] = useState(0);
   const [exportTarget, setExportTarget] = useState<{ logo: string; bg: string; fileIdx: number } | null>(null);
 
@@ -44,9 +53,8 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
 
   const activeFile = loadedFiles[selectedFileIdx] || loadedFiles[0];
   const activeLogo = selectedLogo || logoColors[0]?.hex || "#000000";
-  const activeBg = selectedBg || bgColors[0]?.hex || "#FFFFFF";
+  const activeBg = transparentBg ? "transparent" : (selectedBg || bgColors[0]?.hex || "#FFFFFF");
 
-  // Detect SVG groups for the active file
   const svgGroups = useMemo<SvgGroup[]>(() => {
     if (!activeFile || activeFile.type !== "svg") return [];
     return detectSvgGroups(activeFile.content);
@@ -115,30 +123,28 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           </button>
         </div>
 
-        {/* Fit toggle — only in manual mode */}
-        {viewMode === "manual" && (
-          <div className="flex rounded-lg bg-muted p-0.5">
-            <button
-              onClick={() => setFit("fit")}
-              className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                fit === "fit" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Maximize className="h-3 w-3" /> Fit
-            </button>
-            <button
-              onClick={() => setFit("padded")}
-              className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                fit === "padded" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Frame className="h-3 w-3" /> Padded
-            </button>
-          </div>
-        )}
+        {/* Fit toggle — available in both views */}
+        <div className="flex rounded-lg bg-muted p-0.5">
+          <button
+            onClick={() => setFit("fit")}
+            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              fit === "fit" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Maximize className="h-3 w-3" /> Fit
+          </button>
+          <button
+            onClick={() => setFit("padded")}
+            className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              fit === "padded" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Frame className="h-3 w-3" /> Padded
+          </button>
+        </div>
       </div>
 
-      {/* File selector (shared between views) */}
+      {/* File selector */}
       {loadedFiles.length > 1 && (
         <div className="flex flex-wrap gap-1.5 border-b px-4 py-2">
           {loadedFiles.map((lf, idx) => (
@@ -172,16 +178,21 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           activeFile={activeFile}
           fileIdx={selectedFileIdx}
           svgGroups={svgGroups}
+          fit={fit}
         />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 sm:gap-6 overflow-y-auto p-4 sm:p-8">
           <div
             className={`flex aspect-square w-full max-w-md items-center justify-center rounded-lg transition-colors duration-200 ${fitClassLarge}`}
-            style={{ backgroundColor: activeBg }}
+            style={
+              transparentBg
+                ? checkerStyle
+                : { backgroundColor: activeBg }
+            }
           >
             {activeFile && renderLogo(activeFile, activeLogo, `manual-${selectedFileIdx}`)}
           </div>
-          {activeFile?.type === "svg" && <ContrastBadge logo={activeLogo} bg={activeBg} />}
+          {activeFile?.type === "svg" && !transparentBg && <ContrastBadge logo={activeLogo} bg={activeBg} />}
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             {activeFile?.type === "svg" && (
               <div>
@@ -203,12 +214,21 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
             <div>
               <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Background</p>
               <div className="flex flex-wrap gap-1.5">
+                {/* Transparent option */}
+                <button
+                  onClick={() => { setTransparentBg(true); setSelectedBg(null); }}
+                  className={`h-8 w-8 rounded border transition-all ${
+                    transparentBg ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
+                  }`}
+                  style={checkerStyle}
+                  title="Transparent"
+                />
                 {bgColors.map((c) => (
                   <button
                     key={c.id}
-                    onClick={() => setSelectedBg(c.hex)}
+                    onClick={() => { setTransparentBg(false); setSelectedBg(c.hex); }}
                     className={`h-8 w-8 rounded transition-all ${
-                      activeBg === c.hex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
+                      !transparentBg && activeBg === c.hex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:scale-110"
                     }`}
                     style={{ backgroundColor: c.hex }}
                   />
@@ -236,6 +256,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
           svgContent={loadedFiles[exportTarget.fileIdx].content}
           projectName={projectName}
           fileType={loadedFiles[exportTarget.fileIdx].type}
+          fit={fit}
         />
       )}
     </div>
@@ -260,7 +281,7 @@ function Footer() {
   );
 }
 
-function ContrastBadge({ logo, bg, small = false }: { logo: string; bg: string; small?: boolean }) {
+function ContrastBadge({ logo, bg }: { logo: string; bg: string }) {
   const ratio = contrastRatio(logo, bg);
   const level = wcagLevel(ratio);
   const badgeColors: Record<string, string> = {
@@ -269,7 +290,7 @@ function ContrastBadge({ logo, bg, small = false }: { logo: string; bg: string; 
     Weak: "bg-red-500/10 text-red-500",
   };
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono ${small ? "text-[10px]" : "text-xs"} font-medium ${badgeColors[level]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-xs font-medium ${badgeColors[level]}`}>
       {ratio.toFixed(1)}:1 <span className="font-sans">{level}</span>
     </span>
   );
