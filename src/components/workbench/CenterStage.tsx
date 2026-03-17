@@ -164,21 +164,6 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
         </div>
       )}
 
-      {/* Selective recolor indicator */}
-      {hasSelectiveRecolor && viewMode === "manual" && (
-        <div className="flex items-center justify-center gap-2 border-b px-4 py-2">
-          <span className="text-[10px] text-muted-foreground">
-            Selective recolor active — preserving multi-color groups: {svgGroups.filter(g => !g.isRecolorable).map(g => g.id).join(", ")}
-          </span>
-        </div>
-      )}
-      {!canRecolorLogo && activeFile?.type === "svg" && viewMode === "manual" && (
-        <div className="flex items-center justify-center gap-2 border-b px-4 py-2">
-          <span className="text-[10px] text-muted-foreground">
-            Colorful asset detected — only background can be changed
-          </span>
-        </div>
-      )}
 
       {viewMode === "gallery" && activeFile ? (
         <GalleryView
