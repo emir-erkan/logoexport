@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { exportAsset, downloadBlob } from "@/lib/export-utils";
 import { toast } from "sonner";
+import type { SvgGroup } from "@/lib/svg-group-utils";
 
 interface ExportDialogProps {
   open: boolean;
