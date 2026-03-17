@@ -20,6 +20,7 @@ interface ExportDialogProps {
   projectName: string;
   fileType?: "svg" | "png";
   fit?: "fit" | "padded";
+  svgGroups?: SvgGroup[];
 }
 
 const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
