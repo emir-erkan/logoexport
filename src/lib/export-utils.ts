@@ -114,33 +114,33 @@ function buildSvgElement(opts: ExportOptions, width: number, height: number): SV
   const svgEl = doc.querySelector("svg")!;
 
   const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
+  const padding = opts.padded ? Math.round(width * 0.1) : 0;
+  const totalW = width + padding * 2;
+  const totalH = height + padding * 2;
 
-  // Create wrapper SVG at export dimensions
   const wrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   wrapper.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  wrapper.setAttribute("width", String(width));
-  wrapper.setAttribute("height", String(height));
-  wrapper.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  wrapper.setAttribute("width", String(totalW));
+  wrapper.setAttribute("height", String(totalH));
+  wrapper.setAttribute("viewBox", `0 0 ${totalW} ${totalH}`);
 
   if (!opts.transparent) {
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    rect.setAttribute("width", String(width));
-    rect.setAttribute("height", String(height));
+    rect.setAttribute("width", String(totalW));
+    rect.setAttribute("height", String(totalH));
     rect.setAttribute("fill", opts.bgColor);
     wrapper.appendChild(rect);
   }
 
-  // Nest the original SVG
   const inner = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  inner.setAttribute("x", "0");
-  inner.setAttribute("y", "0");
+  inner.setAttribute("x", String(padding));
+  inner.setAttribute("y", String(padding));
   inner.setAttribute("width", String(width));
   inner.setAttribute("height", String(height));
   inner.setAttribute("viewBox", viewBox);
   inner.innerHTML = svgEl.innerHTML;
   wrapper.appendChild(inner);
 
-  // Must be in DOM for svg2pdf to measure
   wrapper.style.position = "absolute";
   wrapper.style.left = "-9999px";
   document.body.appendChild(wrapper);
