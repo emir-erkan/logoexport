@@ -189,13 +189,16 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
 
   // SVG source file
   const { width, height } = getDimensions(opts.svgContent, opts.size);
+  const padding = opts.padded ? Math.round(width * 0.1) : 0;
+  const totalW = width + padding * 2;
+  const totalH = height + padding * 2;
   const exportSvg = buildExportSvg(opts);
 
   switch (opts.format) {
     case "svg":
       return new Blob([exportSvg], { type: "image/svg+xml" });
     case "png": {
-      const canvas = await renderToCanvas(exportSvg, width, height);
+      const canvas = await renderToCanvas(exportSvg, totalW, totalH);
       return new Promise((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
     }
     case "jpg": {
@@ -203,7 +206,7 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
       if (opts.transparent) {
         jpgSvg = buildExportSvg({ ...opts, transparent: false, bgColor: "#FFFFFF" });
       }
-      const canvas = await renderToCanvas(jpgSvg, width, height);
+      const canvas = await renderToCanvas(jpgSvg, totalW, totalH);
       const tempCanvas = document.createElement("canvas");
       tempCanvas.width = canvas.width;
       tempCanvas.height = canvas.height;
@@ -214,18 +217,16 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
       return new Promise((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
     }
     case "pdf": {
-      // Vector PDF using svg2pdf.js
       const pdfOpts = opts.transparent
         ? { ...opts, transparent: false, bgColor: "#FFFFFF" }
         : opts;
       const svgElement = buildSvgElement(pdfOpts, width, height);
       try {
-        const orientation = width >= height ? "landscape" : "portrait";
-        const pdf = new jsPDF({ orientation, unit: "px", format: [width, height] });
-        await (pdf as any).svg(svgElement, { x: 0, y: 0, width, height });
+        const orientation = totalW >= totalH ? "landscape" : "portrait";
+        const pdf = new jsPDF({ orientation, unit: "px", format: [totalW, totalH] });
+        await (pdf as any).svg(svgElement, { x: 0, y: 0, width: totalW, height: totalH });
         return pdf.output("blob");
       } finally {
-        // Clean up DOM element
         if (svgElement.parentNode) {
           svgElement.parentNode.removeChild(svgElement);
         }
