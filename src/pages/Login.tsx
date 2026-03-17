@@ -18,12 +18,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isSignUp) {
-        await signUp(email, password);
-        toast.success("Check your email for a confirmation link.");
-      } else {
-        await signIn(email, password);
-      }
+      await signIn(email, password);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
