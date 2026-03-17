@@ -187,6 +187,7 @@ function fullRecolor(svgString: string, newColor: string, uniquePrefix?: string)
     /stroke="(?!none|transparent)([^"]*)"/gi,
     `stroke="${newColor}"`
   );
+  // Inline styles
   result = result.replace(
     /fill:\s*(?!none|transparent)[^;}"]+/gi,
     `fill: ${newColor}`
@@ -194,6 +195,21 @@ function fullRecolor(svgString: string, newColor: string, uniquePrefix?: string)
   result = result.replace(
     /stroke:\s*(?!none|transparent)[^;}"]+/gi,
     `stroke: ${newColor}`
+  );
+  // CSS <style> blocks: replace color values in fill/stroke declarations
+  result = result.replace(
+    /(<style[^>]*>)([\s\S]*?)(<\/style>)/gi,
+    (_match, open, css, close) => {
+      let newCss = css.replace(
+        /fill:\s*(?!none|transparent)[^;}"]+/gi,
+        `fill: ${newColor}`
+      );
+      newCss = newCss.replace(
+        /stroke:\s*(?!none|transparent)[^;}"]+/gi,
+        `stroke: ${newColor}`
+      );
+      return open + newCss + close;
+    }
   );
 
   if (uniquePrefix) {

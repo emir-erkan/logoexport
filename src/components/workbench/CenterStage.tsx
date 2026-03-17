@@ -266,7 +266,7 @@ function ContrastBadge({ logo, bg, small = false }: { logo: string; bg: string; 
   const badgeColors: Record<string, string> = {
     AAA: "bg-emerald-500/10 text-emerald-600",
     AA: "bg-amber-500/10 text-amber-600",
-    "Low Contrast": "bg-red-500/10 text-red-500",
+    Weak: "bg-red-500/10 text-red-500",
   };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono ${small ? "text-[10px]" : "text-xs"} font-medium ${badgeColors[level]}`}>

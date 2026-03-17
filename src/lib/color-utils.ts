@@ -41,10 +41,10 @@ export function contrastRatio(hex1: string, hex2: string): number {
 /**
  * WCAG level from contrast ratio
  */
-export function wcagLevel(ratio: number): "AAA" | "AA" | "Low Contrast" {
+export function wcagLevel(ratio: number): "AAA" | "AA" | "Weak" {
   if (ratio >= 7) return "AAA";
   if (ratio >= 4.5) return "AA";
-  return "Low Contrast";
+  return "Weak";
 }
 
 /**

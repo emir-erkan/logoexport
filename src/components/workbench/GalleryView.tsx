@@ -91,7 +91,7 @@ export function GalleryView({ colors, activeFile, fileIdx, svgGroups }: GalleryV
                 const badgeColors: Record<string, string> = {
                   AAA: "bg-emerald-500/10 text-emerald-600",
                   AA: "bg-amber-500/10 text-amber-600",
-                  "Low Contrast": "bg-red-500/10 text-red-500",
+                  Weak: "bg-red-500/10 text-red-500",
                 };
                 return (
                   <div key={`${logo.id}-${bg.id}`} className="group">
