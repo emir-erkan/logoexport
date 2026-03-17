@@ -38,6 +38,10 @@ export function detectSvgGroups(svgString: string): SvgGroup[] {
     // Skip Illustrator metadata groups
     if (id.startsWith("_x") || id === "Layer_1" || id === "Layer_2") return;
 
+    // Force non-recolorable if name suggests it's a colorful/multicolor asset
+    const colorKeywords = /colou?rful|colou?r|renkli|multicolou?r|rgb|chromatic/i;
+    const forcePreserve = colorKeywords.test(id);
+
     const colors = extractColorsFromElement(g);
     groups.push({
       id,
