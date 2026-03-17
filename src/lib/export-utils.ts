@@ -20,7 +20,7 @@ function svgToDataUrl(svgString: string): string {
 }
 
 function buildExportSvg(opts: ExportOptions): string {
-  const recolored = recolorSvg(opts.svgContent, opts.logoColor);
+  const recolored = selectiveRecolorSvg(opts.svgContent, opts.logoColor, undefined, opts.svgGroups);
   const parser = new DOMParser();
   const doc = parser.parseFromString(recolored, "image/svg+xml");
   const svgEl = doc.querySelector("svg");
