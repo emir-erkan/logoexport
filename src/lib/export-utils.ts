@@ -116,9 +116,10 @@ function buildSvgElement(opts: ExportOptions, width: number, height: number): SV
   const svgEl = doc.querySelector("svg")!;
 
   const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
-  const padding = opts.padded ? Math.round(width * 0.1) : 0;
-  const totalW = width + padding * 2;
-  const totalH = height + padding * 2;
+  const padX = opts.padded ? Math.round(width * 0.1) : 0;
+  const padY = opts.padded ? Math.round(height * 0.1) : 0;
+  const totalW = width + padX * 2;
+  const totalH = height + padY * 2;
 
   const wrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   wrapper.setAttribute("xmlns", "http://www.w3.org/2000/svg");
@@ -135,8 +136,8 @@ function buildSvgElement(opts: ExportOptions, width: number, height: number): SV
   }
 
   const inner = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  inner.setAttribute("x", String(padding));
-  inner.setAttribute("y", String(padding));
+  inner.setAttribute("x", String(padX));
+  inner.setAttribute("y", String(padY));
   inner.setAttribute("width", String(width));
   inner.setAttribute("height", String(height));
   inner.setAttribute("viewBox", viewBox);
