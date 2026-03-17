@@ -11,6 +11,8 @@ import { exportAsset } from "@/lib/export-utils";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import type { SvgGroup } from "@/lib/svg-group-utils";
+import { saveAs } from "file-saver";
 
 interface BatchExportDialogProps {
   open: boolean;
