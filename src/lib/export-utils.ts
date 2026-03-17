@@ -222,10 +222,7 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
       return new Promise((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
     }
     case "pdf": {
-      const pdfOpts = opts.transparent
-        ? { ...opts, transparent: false, bgColor: "#FFFFFF" }
-        : opts;
-      const svgElement = buildSvgElement(pdfOpts, width, height);
+      const svgElement = buildSvgElement(opts, width, height);
       try {
         const orientation = totalW >= totalH ? "landscape" : "portrait";
         const pdf = new jsPDF({ orientation, unit: "px", format: [totalW, totalH] });
