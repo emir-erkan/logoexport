@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { recolorSvg, contrastRatio, wcagLevel } from "@/lib/color-utils";
-import { selectiveRecolorSvg, detectSvgGroups, type SvgGroup } from "@/lib/svg-group-utils";
+import { selectiveRecolorSvg, detectSvgGroups, hasRecolorableContent, type SvgGroup } from "@/lib/svg-group-utils";
 import { ExportDialog } from "./ExportDialog";
 import { GalleryView } from "./GalleryView";
 import { Download, Maximize, Frame, Palette, LayoutGrid } from "lucide-react";
