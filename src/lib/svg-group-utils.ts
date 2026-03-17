@@ -46,7 +46,7 @@ export function detectSvgGroups(svgString: string): SvgGroup[] {
     groups.push({
       id,
       uniqueColors: colors,
-      isRecolorable: colors.length <= 1,
+      isRecolorable: forcePreserve ? false : colors.length <= 1,
     });
   });
 
