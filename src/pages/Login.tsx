@@ -64,12 +64,6 @@ export default function Login() {
             {loading ? "..." : isSignUp ? "Create account" : "Sign in"}
           </Button>
         </form>
-        <button
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="mt-4 block w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
-        </button>
       </div>
     </div>
   );
