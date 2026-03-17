@@ -64,6 +64,7 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
   const canRecolorLogo = activeFile?.type === "svg" ? hasRecolorableContent(svgGroups) : false;
 
   const fitClassLarge = fit === "fit" ? "p-0" : "p-8 sm:p-12";
+  const aspectClass = fit === "fit" ? "" : "aspect-square max-w-md";
 
   if (loadedFiles.length === 0) {
     return (
