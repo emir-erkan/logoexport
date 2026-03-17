@@ -46,7 +46,7 @@ function buildExportSvg(opts: ExportOptions): string {
   const bgRect = opts.transparent ? "" : `<rect width="${totalW}" height="${totalH}" fill="${opts.bgColor}" />`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">
     ${bgRect}
-    <svg x="${padding}" y="${padding}" width="${width}" height="${height}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>
+    <svg x="${padX}" y="${padY}" width="${width}" height="${height}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>
   </svg>`;
 }
 
