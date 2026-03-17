@@ -9,7 +9,7 @@ export default function Login() {
   const { user, signIn, signUp } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  
   const [loading, setLoading] = useState(false);
 
   if (user) return <Navigate to="/projects" replace />;
@@ -18,12 +18,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isSignUp) {
-        await signUp(email, password);
-        toast.success("Check your email for a confirmation link.");
-      } else {
-        await signIn(email, password);
-      }
+      await signIn(email, password);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -61,15 +56,9 @@ export default function Login() {
             className="h-11 bg-card font-mono text-sm"
           />
           <Button type="submit" className="h-11 w-full" disabled={loading}>
-            {loading ? "..." : isSignUp ? "Create account" : "Sign in"}
+            {loading ? "..." : "Sign in"}
           </Button>
         </form>
-        <button
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="mt-4 block w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
-        </button>
       </div>
     </div>
   );

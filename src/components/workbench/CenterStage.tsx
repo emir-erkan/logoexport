@@ -182,10 +182,10 @@ export function CenterStage({ colors, loadedFiles, projectName, readOnly = false
 function ContrastBadge({ logo, bg, small = false }: { logo: string; bg: string; small?: boolean }) {
   const ratio = contrastRatio(logo, bg);
   const level = wcagLevel(ratio);
-  const badgeColors = {
+  const badgeColors: Record<string, string> = {
     AAA: "bg-success/10 text-success",
     AA: "bg-warning/10 text-warning",
-    FAIL: "bg-destructive/10 text-destructive",
+    "Low Contrast": "bg-destructive/10 text-destructive",
   };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono ${small ? "text-[10px]" : "text-xs"} font-medium ${badgeColors[level]}`}>
