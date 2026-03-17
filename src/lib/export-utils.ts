@@ -192,9 +192,10 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
 
   // SVG source file
   const { width, height } = getDimensions(opts.svgContent, opts.size);
-  const padding = opts.padded ? Math.round(width * 0.1) : 0;
-  const totalW = width + padding * 2;
-  const totalH = height + padding * 2;
+  const padX = opts.padded ? Math.round(width * 0.1) : 0;
+  const padY = opts.padded ? Math.round(height * 0.1) : 0;
+  const totalW = width + padX * 2;
+  const totalH = height + padY * 2;
   const exportSvg = buildExportSvg(opts);
 
   switch (opts.format) {
