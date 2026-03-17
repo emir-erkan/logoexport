@@ -72,9 +72,10 @@ function renderImageToCanvas(imageUrl: string, width: number, height: number, bg
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const padding = padded ? Math.round(width * 0.1) : 0;
-      const totalW = width + padding * 2;
-      const totalH = height + padding * 2;
+      const padX = padded ? Math.round(width * 0.1) : 0;
+      const padY = padded ? Math.round(height * 0.1) : 0;
+      const totalW = width + padX * 2;
+      const totalH = height + padY * 2;
       const canvas = document.createElement("canvas");
       canvas.width = totalW * 2;
       canvas.height = totalH * 2;
@@ -87,7 +88,7 @@ function renderImageToCanvas(imageUrl: string, width: number, height: number, bg
       const scale = Math.min(width / img.naturalWidth, height / img.naturalHeight);
       const w = img.naturalWidth * scale;
       const h = img.naturalHeight * scale;
-      ctx.drawImage(img, padding + (width - w) / 2, padding + (height - h) / 2, w, h);
+      ctx.drawImage(img, padX + (width - w) / 2, padY + (height - h) / 2, w, h);
       resolve(canvas);
     };
     img.onerror = reject;
