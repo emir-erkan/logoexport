@@ -66,24 +66,27 @@ function renderToCanvas(svgString: string, width: number, height: number): Promi
   });
 }
 
-function renderImageToCanvas(imageUrl: string, width: number, height: number, bgColor: string, transparent: boolean): Promise<HTMLCanvasElement> {
+function renderImageToCanvas(imageUrl: string, width: number, height: number, bgColor: string, transparent: boolean, padded?: boolean): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
+      const padding = padded ? Math.round(width * 0.1) : 0;
+      const totalW = width + padding * 2;
+      const totalH = height + padding * 2;
       const canvas = document.createElement("canvas");
-      canvas.width = width * 2;
-      canvas.height = height * 2;
+      canvas.width = totalW * 2;
+      canvas.height = totalH * 2;
       const ctx = canvas.getContext("2d")!;
       ctx.scale(2, 2);
       if (!transparent) {
         ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(0, 0, totalW, totalH);
       }
       const scale = Math.min(width / img.naturalWidth, height / img.naturalHeight);
       const w = img.naturalWidth * scale;
       const h = img.naturalHeight * scale;
-      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
+      ctx.drawImage(img, padding + (width - w) / 2, padding + (height - h) / 2, w, h);
       resolve(canvas);
     };
     img.onerror = reject;
