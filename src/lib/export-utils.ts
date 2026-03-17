@@ -154,7 +154,7 @@ export async function exportAsset(opts: ExportOptions): Promise<Blob> {
   if (isPng) {
     const width = opts.size;
     const height = opts.size;
-    const canvas = await renderImageToCanvas(opts.svgContent, width, height, opts.bgColor, opts.transparent);
+    const canvas = await renderImageToCanvas(opts.svgContent, width, height, opts.bgColor, opts.transparent, opts.padded);
 
     switch (opts.format) {
       case "png":
