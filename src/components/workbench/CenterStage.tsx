@@ -258,7 +258,7 @@ function Footer() {
       <p className="text-[10px] text-muted-foreground/40">
         Made by{" "}
         <a
-          href="https://emirerkan.com"
+          href="http://emirerkan.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-muted-foreground/60 underline-offset-2 hover:underline hover:text-muted-foreground transition-colors"

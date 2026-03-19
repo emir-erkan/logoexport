@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AppFooter } from "@/components/AppFooter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -60,6 +61,9 @@ export default function Login() {
             </Button>
           </form>
         </div>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0">
+        <AppFooter />
       </div>
     </div>
   );
