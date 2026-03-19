@@ -29,6 +29,7 @@ const tools = [
     path: "outlines",
     color: "from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20",
     iconColor: "text-blue-600 dark:text-blue-400",
+    comingSoon: true,
   },
   {
     id: "guidelines",
