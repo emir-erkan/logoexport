@@ -272,6 +272,9 @@ export default function LogoOutlines() {
                     multiplier={safeSpaceMultiplier} setMultiplier={setSafeSpaceMultiplier}
                     showDimensions={showSSDimensions} setShowDimensions={setShowSSDimensions}
                     safeSpaceColor={safeSpaceColor} setSafeSpaceColor={setSafeSpaceColor}
+                    elementBBoxes={elementBBoxes}
+                    selectedElementIndex={ssElementIndex}
+                    setSelectedElementIndex={setSsElementIndex}
                   />
                 )}
                 {viewMode === "grid" && (
