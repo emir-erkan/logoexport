@@ -62,6 +62,9 @@ export default function Login() {
           </form>
         </div>
       </div>
+      <div className="absolute bottom-0 left-0 right-0">
+        <AppFooter />
+      </div>
     </div>
   );
 }
