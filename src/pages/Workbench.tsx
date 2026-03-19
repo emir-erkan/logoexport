@@ -149,7 +149,7 @@ export default function Workbench() {
     <div className="flex h-screen flex-col bg-background">
       <header className="flex h-14 items-center justify-between border-b px-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => navigate("/projects")}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => navigate(`/projects/${id}`)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           {editing ? (
