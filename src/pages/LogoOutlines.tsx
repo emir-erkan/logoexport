@@ -45,6 +45,7 @@ export default function LogoOutlines() {
   const [safeSpaceMultiplier, setSafeSpaceMultiplier] = useState(2);
   const [showSSDimensions, setShowSSDimensions] = useState(true);
   const [safeSpaceColor, setSafeSpaceColor] = useState("#3b82f6");
+  const [ssElementIndex, setSsElementIndex] = useState(0);
 
   // Grid
   const [showGrid, setShowGrid] = useState(true);
@@ -271,6 +272,9 @@ export default function LogoOutlines() {
                     multiplier={safeSpaceMultiplier} setMultiplier={setSafeSpaceMultiplier}
                     showDimensions={showSSDimensions} setShowDimensions={setShowSSDimensions}
                     safeSpaceColor={safeSpaceColor} setSafeSpaceColor={setSafeSpaceColor}
+                    elementBBoxes={elementBBoxes}
+                    selectedElementIndex={ssElementIndex}
+                    setSelectedElementIndex={setSsElementIndex}
                   />
                 )}
                 {viewMode === "grid" && (
@@ -334,6 +338,7 @@ export default function LogoOutlines() {
                   multiplier={safeSpaceMultiplier}
                   showDimensions={showSSDimensions}
                   safeSpaceColor={safeSpaceColor}
+                  referenceElement={elementBBoxes[ssElementIndex] || null}
                 />
               )}
               {viewMode === "grid" && (
