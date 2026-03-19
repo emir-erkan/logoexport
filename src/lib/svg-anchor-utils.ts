@@ -8,10 +8,11 @@ export interface AnchorPoint {
   type: "corner" | "curve" | "edge" | "endpoint";
 }
 
-/** Parse a single SVG path `d` attribute into anchor points */
+/** Parse a single SVG path `d` attribute into anchor points.
+ *  Only extracts actual on-path points (endpoints of segments),
+ *  NOT off-path control points. */
 export function extractPathAnchors(d: string): AnchorPoint[] {
   const points: AnchorPoint[] = [];
-  // Regex to match path commands
   const commands = d.match(/[MmLlHhVvCcSsQqTtAaZz][^MmLlHhVvCcSsQqTtAaZz]*/g);
   if (!commands) return points;
 
@@ -56,41 +57,29 @@ export function extractPathAnchors(d: string): AnchorPoint[] {
         break;
       }
       case "C": {
+        // Cubic bezier: only the endpoint is on the path
         for (let i = 0; i < nums.length; i += 6) {
-          // Control point 1
-          const cp1x = isRelative ? cx + nums[i] : nums[i];
-          const cp1y = isRelative ? cy + nums[i + 1] : nums[i + 1];
-          // Control point 2
-          const cp2x = isRelative ? cx + nums[i + 2] : nums[i + 2];
-          const cp2y = isRelative ? cy + nums[i + 3] : nums[i + 3];
-          // End point
           cx = isRelative ? cx + nums[i + 4] : nums[i + 4];
           cy = isRelative ? cy + nums[i + 5] : nums[i + 5];
-          points.push({ x: cp1x, y: cp1y, type: "curve" });
-          points.push({ x: cp2x, y: cp2y, type: "curve" });
-          points.push({ x: cx, y: cy, type: "corner" });
+          points.push({ x: cx, y: cy, type: "curve" });
         }
         break;
       }
       case "S": {
+        // Smooth cubic: only endpoint
         for (let i = 0; i < nums.length; i += 4) {
-          const cpx = isRelative ? cx + nums[i] : nums[i];
-          const cpy = isRelative ? cy + nums[i + 1] : nums[i + 1];
           cx = isRelative ? cx + nums[i + 2] : nums[i + 2];
           cy = isRelative ? cy + nums[i + 3] : nums[i + 3];
-          points.push({ x: cpx, y: cpy, type: "curve" });
-          points.push({ x: cx, y: cy, type: "corner" });
+          points.push({ x: cx, y: cy, type: "curve" });
         }
         break;
       }
       case "Q": {
+        // Quadratic: only endpoint
         for (let i = 0; i < nums.length; i += 4) {
-          const cpx = isRelative ? cx + nums[i] : nums[i];
-          const cpy = isRelative ? cy + nums[i + 1] : nums[i + 1];
           cx = isRelative ? cx + nums[i + 2] : nums[i + 2];
           cy = isRelative ? cy + nums[i + 3] : nums[i + 3];
-          points.push({ x: cpx, y: cpy, type: "curve" });
-          points.push({ x: cx, y: cy, type: "corner" });
+          points.push({ x: cx, y: cy, type: "curve" });
         }
         break;
       }
@@ -98,7 +87,7 @@ export function extractPathAnchors(d: string): AnchorPoint[] {
         for (let i = 0; i < nums.length; i += 2) {
           cx = isRelative ? cx + nums[i] : nums[i];
           cy = isRelative ? cy + nums[i + 1] : nums[i + 1];
-          points.push({ x: cx, y: cy, type: "corner" });
+          points.push({ x: cx, y: cy, type: "curve" });
         }
         break;
       }
@@ -130,7 +119,6 @@ export function extractAllAnchors(svgElement: SVGSVGElement): AnchorPoint[] {
     if (d) allPoints.push(...extractPathAnchors(d));
   });
 
-  // Also extract center points of shapes
   const circles = svgElement.querySelectorAll("circle");
   circles.forEach((c) => {
     allPoints.push({
@@ -176,7 +164,7 @@ export function deduplicatePoints(points: AnchorPoint[], tolerance = 0.5): Ancho
   return result;
 }
 
-/** Filter points to only the most significant ones (edge/boundary anchors) */
+/** Filter points near the edges of the viewBox */
 export function filterEdgeAnchors(
   points: AnchorPoint[],
   vbX: number, vbY: number, vbW: number, vbH: number,
