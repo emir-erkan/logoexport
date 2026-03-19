@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AppFooter } from "@/components/AppFooter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
