@@ -2,15 +2,18 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export type AnchorShape = "circle" | "square" | "diamond";
-export type AnchorFilter = "all" | "corners" | "edges" | "curves";
+export type AnchorFilterType = "corners" | "edges" | "curves";
 
 interface Props {
   strokeWidth: number;
   setStrokeWidth: (v: number) => void;
   strokeColor: string;
   setStrokeColor: (v: string) => void;
+  fillColor: string;
+  setFillColor: (v: string) => void;
   showFill: boolean;
   setShowFill: (v: boolean) => void;
   showAnchors: boolean;
@@ -19,8 +22,8 @@ interface Props {
   setAnchorShape: (v: AnchorShape) => void;
   anchorSize: number;
   setAnchorSize: (v: number) => void;
-  anchorFilter: AnchorFilter;
-  setAnchorFilter: (v: AnchorFilter) => void;
+  anchorFilters: AnchorFilterType[];
+  setAnchorFilters: (v: AnchorFilterType[]) => void;
   maxAnchors: number;
   setMaxAnchors: (v: number) => void;
 }
@@ -28,13 +31,25 @@ interface Props {
 export default function OutlineSettings({
   strokeWidth, setStrokeWidth,
   strokeColor, setStrokeColor,
+  fillColor, setFillColor,
   showFill, setShowFill,
   showAnchors, setShowAnchors,
   anchorShape, setAnchorShape,
   anchorSize, setAnchorSize,
-  anchorFilter, setAnchorFilter,
+  anchorFilters, setAnchorFilters,
   maxAnchors, setMaxAnchors,
 }: Props) {
+  const toggleFilter = (filter: AnchorFilterType) => {
+    if (anchorFilters.includes(filter)) {
+      // Don't allow deselecting the last one
+      if (anchorFilters.length > 1) {
+        setAnchorFilters(anchorFilters.filter(f => f !== filter));
+      }
+    } else {
+      setAnchorFilters([...anchorFilters, filter]);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Outline</p>
@@ -59,6 +74,16 @@ export default function OutlineSettings({
         <Label className="text-xs">Show Original Fill</Label>
         <Switch checked={showFill} onCheckedChange={setShowFill} />
       </div>
+
+      {showFill && (
+        <div className="space-y-2">
+          <Label className="text-xs">Fill Color</Label>
+          <div className="flex gap-2 items-center">
+            <input type="color" value={fillColor} onChange={e => setFillColor(e.target.value)} className="h-7 w-7 rounded-lg border border-border cursor-pointer bg-transparent" />
+            <span className="text-[11px] font-mono text-muted-foreground">{fillColor}</span>
+          </div>
+        </div>
+      )}
 
       <div className="h-px bg-border" />
 
@@ -88,16 +113,24 @@ export default function OutlineSettings({
             <Slider value={[anchorSize]} onValueChange={([v]) => setAnchorSize(v)} min={1} max={8} step={0.5} />
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs">Anchor Filter</Label>
-            <Tabs value={anchorFilter} onValueChange={(v) => setAnchorFilter(v as AnchorFilter)}>
-              <TabsList className="w-full rounded-xl bg-muted h-8">
-                <TabsTrigger value="all" className="flex-1 rounded-lg text-[11px] h-6">All</TabsTrigger>
-                <TabsTrigger value="corners" className="flex-1 rounded-lg text-[11px] h-6">Corners</TabsTrigger>
-                <TabsTrigger value="edges" className="flex-1 rounded-lg text-[11px] h-6">Edges</TabsTrigger>
-                <TabsTrigger value="curves" className="flex-1 rounded-lg text-[11px] h-6">Curves</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <div className="space-y-2.5">
+            <Label className="text-xs">Show Point Types</Label>
+            <div className="space-y-2">
+              {([
+                { value: "corners" as AnchorFilterType, label: "Corners & Endpoints" },
+                { value: "edges" as AnchorFilterType, label: "Edge Points" },
+                { value: "curves" as AnchorFilterType, label: "Curve Points" },
+              ]).map(({ value, label }) => (
+                <div key={value} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`filter-${value}`}
+                    checked={anchorFilters.includes(value)}
+                    onCheckedChange={() => toggleFilter(value)}
+                  />
+                  <label htmlFor={`filter-${value}`} className="text-[11px] cursor-pointer">{label}</label>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">

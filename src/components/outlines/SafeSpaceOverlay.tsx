@@ -11,11 +11,10 @@ interface Props {
 export default function SafeSpaceOverlay({
   vbX, vbY, vbW, vbH, multiplier, showDimensions, safeSpaceColor,
 }: Props) {
-  // Use the smaller dimension as the "element unit" (like the icon crest)
-  const unitSize = Math.min(vbW, vbH) * 0.15; // ~15% of smallest side = "1x" element
+  const unitSize = Math.min(vbW, vbH) * 0.15;
   const space = unitSize * multiplier;
 
-  // Extended viewBox to show the safe space
+  // Extended viewBox
   const evbX = vbX - space;
   const evbY = vbY - space;
   const evbW = vbW + space * 2;
@@ -44,88 +43,79 @@ export default function SafeSpaceOverlay({
         opacity={0.4}
       />
 
-      {/* Element unit boxes at corners — showing the measurement element */}
+      {/* Element unit boxes at corners — OUTSIDE the logo, in the safe space margin */}
       {[
-        // Top-left
-        { x: vbX - space, y: vbY - space },
-        // Top-right
-        { x: vbX + vbW + space - unitSize * multiplier, y: vbY - space },
-        // Bottom-left
-        { x: vbX - space, y: vbY + vbH + space - unitSize * multiplier },
-        // Bottom-right
-        { x: vbX + vbW + space - unitSize * multiplier, y: vbY + vbH + space - unitSize * multiplier },
+        // Top-left corner
+        { x: evbX, y: evbY },
+        // Top-right corner
+        { x: evbX + evbW - unitSize * multiplier, y: evbY },
+        // Bottom-left corner
+        { x: evbX, y: evbY + evbH - unitSize * multiplier },
+        // Bottom-right corner
+        { x: evbX + evbW - unitSize * multiplier, y: evbY + evbH - unitSize * multiplier },
       ].map((pos, i) => (
-        <rect
-          key={`unit-${i}`}
-          x={pos.x} y={pos.y}
-          width={unitSize * multiplier}
-          height={unitSize * multiplier}
-          fill={safeSpaceColor}
-          opacity={0.08}
-          stroke={safeSpaceColor}
-          strokeWidth={sw * 0.5}
-          strokeDasharray={`${vbW * 0.005} ${vbW * 0.003}`}
-        />
+        <g key={`unit-${i}`}>
+          <rect
+            x={pos.x} y={pos.y}
+            width={unitSize * multiplier}
+            height={unitSize * multiplier}
+            fill={safeSpaceColor}
+            opacity={0.08}
+            stroke={safeSpaceColor}
+            strokeWidth={sw * 0.5}
+            strokeDasharray={`${vbW * 0.005} ${vbW * 0.003}`}
+          />
+          {/* Dimension label INSIDE each box */}
+          {showDimensions && (
+            <text
+              x={pos.x + (unitSize * multiplier) / 2}
+              y={pos.y + (unitSize * multiplier) / 2 + fontSz * 0.35}
+              fill={safeSpaceColor}
+              fontSize={fontSz}
+              fontFamily="DM Sans, system-ui, sans-serif"
+              fontWeight="500"
+              textAnchor="middle"
+              opacity={0.7}
+            >
+              {multiplier}x
+            </text>
+          )}
+        </g>
       ))}
 
-      {/* Dimension lines — top */}
-      <line
-        x1={vbX + vbW / 2} y1={vbY - space}
-        x2={vbX + vbW / 2} y2={vbY}
-        stroke={safeSpaceColor} strokeWidth={sw}
-        markerEnd="url(#arrowEnd)" markerStart="url(#arrowStart)"
+      {/* Thin edge boxes on the sides (between corner boxes) */}
+      {/* Top edge */}
+      <rect
+        x={evbX + unitSize * multiplier} y={evbY}
+        width={evbW - unitSize * multiplier * 2} height={space}
+        fill={safeSpaceColor} opacity={0.04}
+        stroke={safeSpaceColor} strokeWidth={sw * 0.3}
+        strokeDasharray={`${vbW * 0.005} ${vbW * 0.003}`}
       />
-      {/* Bottom */}
-      <line
-        x1={vbX + vbW / 2} y1={vbY + vbH}
-        x2={vbX + vbW / 2} y2={vbY + vbH + space}
-        stroke={safeSpaceColor} strokeWidth={sw}
+      {/* Bottom edge */}
+      <rect
+        x={evbX + unitSize * multiplier} y={vbY + vbH}
+        width={evbW - unitSize * multiplier * 2} height={space}
+        fill={safeSpaceColor} opacity={0.04}
+        stroke={safeSpaceColor} strokeWidth={sw * 0.3}
+        strokeDasharray={`${vbW * 0.005} ${vbW * 0.003}`}
       />
-      {/* Left */}
-      <line
-        x1={vbX - space} y1={vbY + vbH / 2}
-        x2={vbX} y2={vbY + vbH / 2}
-        stroke={safeSpaceColor} strokeWidth={sw}
+      {/* Left edge */}
+      <rect
+        x={evbX} y={evbY + unitSize * multiplier}
+        width={space} height={evbH - unitSize * multiplier * 2}
+        fill={safeSpaceColor} opacity={0.04}
+        stroke={safeSpaceColor} strokeWidth={sw * 0.3}
+        strokeDasharray={`${vbW * 0.005} ${vbW * 0.003}`}
       />
-      {/* Right */}
-      <line
-        x1={vbX + vbW} y1={vbY + vbH / 2}
-        x2={vbX + vbW + space} y2={vbY + vbH / 2}
-        stroke={safeSpaceColor} strokeWidth={sw}
+      {/* Right edge */}
+      <rect
+        x={vbX + vbW} y={evbY + unitSize * multiplier}
+        width={space} height={evbH - unitSize * multiplier * 2}
+        fill={safeSpaceColor} opacity={0.04}
+        stroke={safeSpaceColor} strokeWidth={sw * 0.3}
+        strokeDasharray={`${vbW * 0.005} ${vbW * 0.003}`}
       />
-
-      {/* Small ticks at line ends */}
-      {/* Top ticks */}
-      <line x1={vbX + vbW / 2 - fontSz * 0.5} y1={vbY - space} x2={vbX + vbW / 2 + fontSz * 0.5} y2={vbY - space} stroke={safeSpaceColor} strokeWidth={sw} />
-      <line x1={vbX + vbW / 2 - fontSz * 0.5} y1={vbY} x2={vbX + vbW / 2 + fontSz * 0.5} y2={vbY} stroke={safeSpaceColor} strokeWidth={sw} />
-
-      {showDimensions && (
-        <>
-          {/* Top label */}
-          <text
-            x={vbX + vbW / 2 + fontSz * 0.6}
-            y={vbY - space / 2 + fontSz * 0.35}
-            fill={safeSpaceColor}
-            fontSize={fontSz}
-            fontFamily="DM Sans, system-ui, sans-serif"
-            fontWeight="500"
-          >
-            {multiplier}x
-          </text>
-          {/* Left label */}
-          <text
-            x={vbX - space / 2 - fontSz * 0.8}
-            y={vbY + vbH / 2 + fontSz * 0.35}
-            fill={safeSpaceColor}
-            fontSize={fontSz}
-            fontFamily="DM Sans, system-ui, sans-serif"
-            fontWeight="500"
-            textAnchor="middle"
-          >
-            {multiplier}x
-          </text>
-        </>
-      )}
     </svg>
   );
 }

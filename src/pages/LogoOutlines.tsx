@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, PanelLeftClose, PanelLeft, Download } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Tables } from "@/integrations/supabase/types";
-import OutlineSettings, { type AnchorShape, type AnchorFilter } from "@/components/outlines/OutlineSettings";
+import OutlineSettings, { type AnchorShape, type AnchorFilterType } from "@/components/outlines/OutlineSettings";
 import SafeSpaceSettings from "@/components/outlines/SafeSpaceSettings";
 import GridSettings from "@/components/outlines/GridSettings";
 import AnchorOverlay from "@/components/outlines/AnchorOverlay";
@@ -33,11 +33,12 @@ export default function LogoOutlines() {
   // Outline settings
   const [strokeWidth, setStrokeWidth] = useState(1.5);
   const [strokeColor, setStrokeColor] = useState("#1a1a1a");
+  const [fillColor, setFillColor] = useState("#000000");
   const [showFill, setShowFill] = useState(false);
   const [showAnchors, setShowAnchors] = useState(true);
   const [anchorShape, setAnchorShape] = useState<AnchorShape>("circle");
   const [anchorSize, setAnchorSize] = useState(3);
-  const [anchorFilter, setAnchorFilter] = useState<AnchorFilter>("all");
+  const [anchorFilters, setAnchorFilters] = useState<AnchorFilterType[]>(["corners", "edges", "curves"]);
   const [maxAnchors, setMaxAnchors] = useState(80);
 
   // Safe space
@@ -90,7 +91,7 @@ export default function LogoOutlines() {
 
   const svgFiles = useMemo(() => files.filter(f => f.file_name.toLowerCase().endsWith(".svg")), [files]);
 
-  // Process SVG: extract outlines, anchors, bboxes
+  // Process SVG: extract outlines
   const processedSvg = useMemo(() => {
     if (!svgContent) return null;
     const parser = new DOMParser();
@@ -102,21 +103,27 @@ export default function LogoOutlines() {
     const vbParts = viewBox?.split(/[\s,]+/).map(Number) || [0, 0, 100, 100];
     const [vbX, vbY, vbW, vbH] = vbParts;
 
+    // Ensure preserveAspectRatio matches overlays
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
     const outlineSvg = svg.cloneNode(true) as SVGSVGElement;
-    if (!showFill) {
-      outlineSvg.querySelectorAll("path, circle, ellipse, rect, polygon, polyline, line").forEach((el) => {
-        const elem = el as SVGElement;
+    outlineSvg.querySelectorAll("path, circle, ellipse, rect, polygon, polyline, line").forEach((el) => {
+      const elem = el as SVGElement;
+      if (showFill) {
+        elem.setAttribute("fill", fillColor);
+        elem.style.fill = fillColor;
+      } else {
         elem.setAttribute("fill", "none");
-        elem.setAttribute("stroke", strokeColor);
-        elem.setAttribute("stroke-width", String(strokeWidth));
         elem.style.fill = "none";
-        elem.style.stroke = strokeColor;
-        elem.style.strokeWidth = String(strokeWidth);
-      });
-    }
+      }
+      elem.setAttribute("stroke", strokeColor);
+      elem.setAttribute("stroke-width", String(strokeWidth));
+      elem.style.stroke = strokeColor;
+      elem.style.strokeWidth = String(strokeWidth);
+    });
 
     return { outlineHtml: outlineSvg.outerHTML, vbX, vbY, vbW, vbH };
-  }, [svgContent, strokeWidth, strokeColor, showFill]);
+  }, [svgContent, strokeWidth, strokeColor, showFill, fillColor]);
 
   // Extract anchors and bboxes using a hidden rendered SVG
   useEffect(() => {
@@ -125,7 +132,6 @@ export default function LogoOutlines() {
     const svg = hiddenSvgRef.current.querySelector("svg");
     if (!svg) return;
 
-    // Need to wait for SVG to be in DOM for getBBox
     requestAnimationFrame(() => {
       setAnchors(extractAllAnchors(svg));
       setElementBBoxes(extractElementBBoxes(svg));
@@ -251,11 +257,12 @@ export default function LogoOutlines() {
                   <OutlineSettings
                     strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
                     strokeColor={strokeColor} setStrokeColor={setStrokeColor}
+                    fillColor={fillColor} setFillColor={setFillColor}
                     showFill={showFill} setShowFill={setShowFill}
                     showAnchors={showAnchors} setShowAnchors={setShowAnchors}
                     anchorShape={anchorShape} setAnchorShape={setAnchorShape}
                     anchorSize={anchorSize} setAnchorSize={setAnchorSize}
-                    anchorFilter={anchorFilter} setAnchorFilter={setAnchorFilter}
+                    anchorFilters={anchorFilters} setAnchorFilters={setAnchorFilters}
                     maxAnchors={maxAnchors} setMaxAnchors={setMaxAnchors}
                   />
                 )}
@@ -305,9 +312,9 @@ export default function LogoOutlines() {
         {/* Center Stage */}
         <div className="flex-1 flex items-center justify-center overflow-hidden p-8" style={{ backgroundColor: bgColor }}>
           {processedSvg ? (
-            <div className="relative w-full max-w-2xl aspect-square">
+            <div className="relative w-full max-w-2xl aspect-square flex items-center justify-center">
               <div
-                className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
+                className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
                 dangerouslySetInnerHTML={{ __html: processedSvg.outlineHtml }}
               />
               {viewMode === "outline" && showAnchors && (
@@ -316,7 +323,7 @@ export default function LogoOutlines() {
                   vbX={processedSvg.vbX} vbY={processedSvg.vbY}
                   vbW={processedSvg.vbW} vbH={processedSvg.vbH}
                   anchorShape={anchorShape} anchorSize={anchorSize}
-                  anchorFilter={anchorFilter} maxAnchors={maxAnchors}
+                  anchorFilters={anchorFilters} maxAnchors={maxAnchors}
                   strokeColor={strokeColor}
                 />
               )}

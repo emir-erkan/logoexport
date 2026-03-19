@@ -1,6 +1,6 @@
 import React from "react";
 import type { AnchorPoint } from "@/lib/svg-anchor-utils";
-import type { AnchorShape, AnchorFilter } from "./OutlineSettings";
+import type { AnchorShape, AnchorFilterType } from "./OutlineSettings";
 import { deduplicatePoints, filterEdgeAnchors, subsamplePoints } from "@/lib/svg-anchor-utils";
 
 interface Props {
@@ -11,35 +11,43 @@ interface Props {
   vbH: number;
   anchorShape: AnchorShape;
   anchorSize: number;
-  anchorFilter: AnchorFilter;
+  anchorFilters: AnchorFilterType[];
   maxAnchors: number;
   strokeColor: string;
 }
 
 export default function AnchorOverlay({
   anchors, vbX, vbY, vbW, vbH,
-  anchorShape, anchorSize, anchorFilter, maxAnchors, strokeColor,
+  anchorShape, anchorSize, anchorFilters, maxAnchors, strokeColor,
 }: Props) {
   let filtered = deduplicatePoints(anchors, vbW * 0.005);
 
-  // Apply filter
-  switch (anchorFilter) {
-    case "corners":
-      filtered = filtered.filter(p => p.type === "corner" || p.type === "endpoint");
-      break;
-    case "edges":
-      filtered = filterEdgeAnchors(filtered, vbX, vbY, vbW, vbH, 0.1);
-      break;
-    case "curves":
-      filtered = filtered.filter(p => p.type === "curve");
-      break;
-    // "all" shows everything
+  // Apply multi-select filters
+  const hasCorners = anchorFilters.includes("corners");
+  const hasEdges = anchorFilters.includes("edges");
+  const hasCurves = anchorFilters.includes("curves");
+  const showAll = hasCorners && hasEdges && hasCurves;
+
+  if (!showAll) {
+    let result: AnchorPoint[] = [];
+    if (hasCorners) {
+      result = result.concat(filtered.filter(p => p.type === "corner" || p.type === "endpoint"));
+    }
+    if (hasCurves) {
+      result = result.concat(filtered.filter(p => p.type === "curve"));
+    }
+    if (hasEdges) {
+      const edgePoints = filterEdgeAnchors(filtered, vbX, vbY, vbW, vbH, 0.1);
+      result = result.concat(edgePoints);
+    }
+    // Deduplicate again after merging
+    filtered = deduplicatePoints(result, vbW * 0.005);
   }
 
   // Subsample to max count
   filtered = subsamplePoints(filtered, maxAnchors);
 
-  const s = vbW * anchorSize * 0.003; // scale size relative to viewBox
+  const s = vbW * anchorSize * 0.003;
 
   return (
     <svg
@@ -55,9 +63,7 @@ export default function AnchorOverlay({
 
         if (anchorShape === "circle") {
           return (
-            <React.Fragment key={key}>
-              <circle cx={p.x} cy={p.y} r={s} fill={fill} stroke={stroke} strokeWidth={sw} opacity={0.9} />
-            </React.Fragment>
+            <circle key={key} cx={p.x} cy={p.y} r={s} fill={fill} stroke={stroke} strokeWidth={sw} opacity={0.9} />
           );
         }
         if (anchorShape === "square") {
@@ -65,7 +71,6 @@ export default function AnchorOverlay({
             <rect key={key} x={p.x - s} y={p.y - s} width={s * 2} height={s * 2} fill={fill} stroke={stroke} strokeWidth={sw} opacity={0.9} />
           );
         }
-        // diamond
         return (
           <polygon
             key={key}
