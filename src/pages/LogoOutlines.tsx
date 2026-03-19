@@ -45,6 +45,7 @@ export default function LogoOutlines() {
   const [safeSpaceMultiplier, setSafeSpaceMultiplier] = useState(2);
   const [showSSDimensions, setShowSSDimensions] = useState(true);
   const [safeSpaceColor, setSafeSpaceColor] = useState("#3b82f6");
+  const [ssElementIndex, setSsElementIndex] = useState(0);
 
   // Grid
   const [showGrid, setShowGrid] = useState(true);
