@@ -140,6 +140,7 @@ export default function Projects() {
           </div>
         )}
       </main>
+      <AppFooter />
     </div>
   );
 }

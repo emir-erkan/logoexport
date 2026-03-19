@@ -157,6 +157,7 @@ export default function ProjectHub() {
           ))}
         </div>
       </main>
+      <AppFooter />
     </div>
   );
 }
