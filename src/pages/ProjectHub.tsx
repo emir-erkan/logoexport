@@ -74,7 +74,7 @@ export default function ProjectHub() {
 
   const copyShareLink = () => {
     if (!project) return;
-    const url = `${window.location.origin}/shared/${project.share_token}`;
+    const url = `https://logoexport.lovable.app/shared/${project.share_token}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     toast.success("Share link copied!");
