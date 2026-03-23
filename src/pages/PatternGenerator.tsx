@@ -195,19 +195,26 @@ export default function PatternGenerator() {
 
     const canvasW = 800;
     const canvasH = 800;
+    // Calculate how much extra area we need to cover when rotated
+    const rad = Math.abs(angle) * (Math.PI / 180);
+    const diag = Math.sqrt(canvasW * canvasW + canvasH * canvasH);
+    const expandedW = Math.max(canvasW, diag) + 200;
+    const expandedH = Math.max(canvasH, diag) + 200;
     const cellW = elementSize + hSpacing;
     const cellH = elementSize + vSpacing;
-    const cols = Math.ceil(canvasW / cellW) + 4;
-    const rows = Math.ceil(canvasH / cellH) + 4;
+    const cols = Math.ceil(expandedW / cellW) + 2;
+    const rows = Math.ceil(expandedH / cellH) + 2;
+    const startX = -(expandedW - canvasW) / 2;
+    const startY = -(expandedH - canvasH) / 2;
     const offsetPx = (cellW * rowOffset) / 100;
 
     const elements: string[] = [];
     let svgIdx = 0;
 
-    for (let row = -2; row < rows; row++) {
-      for (let col = -2; col < cols; col++) {
-        let x = col * cellW;
-        let y = row * cellH;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        let x = startX + col * cellW;
+        let y = startY + row * cellH;
 
         if (layout === "brick" && row % 2 !== 0) {
           x += offsetPx;
