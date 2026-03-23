@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Palette, PenTool, BookOpen, Repeat, Check, Copy } from "lucide-react";
+import { ArrowLeft, Palette, PenTool, BookOpen, LayoutGrid, Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -36,7 +36,7 @@ const tools = [
     id: "patterns",
     title: "Pattern Generator",
     description: "Create infinitely repeating patterns from your logos with grid, brick, and hex layouts.",
-    icon: Repeat,
+    icon: LayoutGrid,
     path: "patterns",
     color: "from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20",
     iconColor: "text-violet-600 dark:text-violet-400",
