@@ -33,6 +33,15 @@ const tools = [
     comingSoon: true,
   },
   {
+    id: "patterns",
+    title: "Pattern Generator",
+    description: "Create infinitely repeating patterns from your logos with grid, brick, and hex layouts.",
+    icon: Repeat,
+    path: "patterns",
+    color: "from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20",
+    iconColor: "text-violet-600 dark:text-violet-400",
+  },
+  {
     id: "guidelines",
     title: "Brand Guidelines",
     description: "Generate comprehensive brand documentation from editable templates.",
