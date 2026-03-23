@@ -220,6 +220,7 @@ export default function PatternGenerator() {
         }
 
         const svg = selectedSvgs[svgIdx % selectedSvgs.length];
+        const fileSize = fileSizes[svg.file.id] ?? elementSize;
         svgIdx++;
 
         const groups = detectSvgGroups(svg.content);
@@ -233,9 +234,12 @@ export default function PatternGenerator() {
         if (!svgEl) continue;
 
         const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
+        // Center the element within the cell if it's smaller than the cell
+        const offsetX = (elementSize - fileSize) / 2;
+        const offsetY = (elementSize - fileSize) / 2;
 
         elements.push(
-          `<svg x="${x}" y="${y}" width="${elementSize}" height="${elementSize}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>`
+          `<svg x="${x + offsetX}" y="${y + offsetY}" width="${fileSize}" height="${fileSize}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>`
         );
       }
     }
