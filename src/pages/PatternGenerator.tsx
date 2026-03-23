@@ -109,6 +109,7 @@ export default function PatternGenerator() {
   const [rowOffset, setRowOffset] = useState(50); // percentage of cell width for offset rows
   const [angle, setAngle] = useState(0);
   const [elementSize, setElementSize] = useState(60);
+  const [fileSizes, setFileSizes] = useState<Record<string, number>>({}); // per-file size overrides
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [selectedBg, setSelectedBg] = useState<string | null>(null);
   const [transparentBg, setTransparentBg] = useState(false);
