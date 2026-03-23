@@ -109,6 +109,7 @@ export default function PatternGenerator() {
   const [rowOffset, setRowOffset] = useState(50); // percentage of cell width for offset rows
   const [angle, setAngle] = useState(0);
   const [elementSize, setElementSize] = useState(60);
+  const [fileSizes, setFileSizes] = useState<Record<string, number>>({}); // per-file size overrides
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [selectedBg, setSelectedBg] = useState<string | null>(null);
   const [transparentBg, setTransparentBg] = useState(false);
@@ -219,6 +220,7 @@ export default function PatternGenerator() {
         }
 
         const svg = selectedSvgs[svgIdx % selectedSvgs.length];
+        const fileSize = fileSizes[svg.file.id] ?? elementSize;
         svgIdx++;
 
         const groups = detectSvgGroups(svg.content);
@@ -232,9 +234,12 @@ export default function PatternGenerator() {
         if (!svgEl) continue;
 
         const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
+        // Center the element within the cell if it's smaller than the cell
+        const offsetX = (elementSize - fileSize) / 2;
+        const offsetY = (elementSize - fileSize) / 2;
 
         elements.push(
-          `<svg x="${x}" y="${y}" width="${elementSize}" height="${elementSize}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>`
+          `<svg x="${x + offsetX}" y="${y + offsetY}" width="${fileSize}" height="${fileSize}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>`
         );
       }
     }
@@ -248,7 +253,7 @@ export default function PatternGenerator() {
         ${elements.join("\n")}
       </g>
     </svg>`;
-  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, activeLogo, activeBg, transparentBg]);
+  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, fileSizes, activeLogo, activeBg, transparentBg]);
 
   if (!project) {
     return (
@@ -349,8 +354,20 @@ export default function PatternGenerator() {
               </div>
 
               {/* Element Size */}
-              <div className="border-b p-4">
-                <SliderInput label="Element Size" value={elementSize} onChange={setElementSize} min={20} max={200} step={2} />
+              <div className="border-b p-4 space-y-4">
+                <SliderInput label="Base Size" value={elementSize} onChange={setElementSize} min={20} max={200} step={2} />
+                {/* Per-file size overrides */}
+                {files.filter(f => selectedFileIds.has(f.id)).map(f => (
+                  <SliderInput
+                    key={f.id}
+                    label={f.file_name.replace(/\.\w+$/, "")}
+                    value={fileSizes[f.id] ?? elementSize}
+                    onChange={(v) => setFileSizes(prev => ({ ...prev, [f.id]: v }))}
+                    min={10}
+                    max={300}
+                    step={2}
+                  />
+                ))}
               </div>
 
               {/* Spacing */}
