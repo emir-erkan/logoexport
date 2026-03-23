@@ -211,10 +211,10 @@ export default function PatternGenerator() {
     const elements: string[] = [];
     let svgIdx = 0;
 
-    for (let row = -2; row < rows; row++) {
-      for (let col = -2; col < cols; col++) {
-        let x = col * cellW;
-        let y = row * cellH;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        let x = startX + col * cellW;
+        let y = startY + row * cellH;
 
         if (layout === "brick" && row % 2 !== 0) {
           x += offsetPx;
