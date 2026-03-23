@@ -354,8 +354,20 @@ export default function PatternGenerator() {
               </div>
 
               {/* Element Size */}
-              <div className="border-b p-4">
-                <SliderInput label="Element Size" value={elementSize} onChange={setElementSize} min={20} max={200} step={2} />
+              <div className="border-b p-4 space-y-4">
+                <SliderInput label="Base Size" value={elementSize} onChange={setElementSize} min={20} max={200} step={2} />
+                {/* Per-file size overrides */}
+                {files.filter(f => selectedFileIds.has(f.id)).map(f => (
+                  <SliderInput
+                    key={f.id}
+                    label={f.file_name.replace(/\.\w+$/, "")}
+                    value={fileSizes[f.id] ?? elementSize}
+                    onChange={(v) => setFileSizes(prev => ({ ...prev, [f.id]: v }))}
+                    min={10}
+                    max={300}
+                    step={2}
+                  />
+                ))}
               </div>
 
               {/* Spacing */}
