@@ -253,7 +253,7 @@ export default function PatternGenerator() {
         ${elements.join("\n")}
       </g>
     </svg>`;
-  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, activeLogo, activeBg, transparentBg]);
+  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, fileSizes, activeLogo, activeBg, transparentBg]);
 
   if (!project) {
     return (
