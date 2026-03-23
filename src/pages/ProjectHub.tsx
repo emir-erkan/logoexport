@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Palette, PenTool, BookOpen, Check, Copy } from "lucide-react";
+import { ArrowLeft, Palette, PenTool, BookOpen, Repeat, Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
