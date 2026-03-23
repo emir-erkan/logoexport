@@ -195,19 +195,18 @@ export default function PatternGenerator() {
 
     const canvasW = 800;
     const canvasH = 800;
-    // Calculate how much extra area we need to cover when rotated
-    const rad = Math.abs(angle) * (Math.PI / 180);
+    // Calculate expanded area to cover rotation + ensure edge coverage
     const diag = Math.sqrt(canvasW * canvasW + canvasH * canvasH);
-    const expandedW = Math.max(canvasW, diag) + 200;
-    const expandedH = Math.max(canvasH, diag) + 200;
+    // Use 2x diagonal to guarantee no gaps at any rotation angle
+    const expandedW = diag * 2;
+    const expandedH = diag * 2;
     const cellW = elementSize + hSpacing;
     const cellH = elementSize + vSpacing;
-    const cols = Math.ceil(expandedW / cellW) + 2;
-    const rows = Math.ceil(expandedH / cellH) + 2;
-    const startX = -(expandedW - canvasW) / 2;
-    const startY = -(expandedH - canvasH) / 2;
+    const cols = Math.ceil(expandedW / cellW) + 4;
+    const rows = Math.ceil(expandedH / cellH) + 4;
+    const startX = -(expandedW - canvasW) / 2 - cellW;
+    const startY = -(expandedH - canvasH) / 2 - cellH;
     const offsetPx = (cellW * rowOffset) / 100;
-
     const elements: string[] = [];
     let svgIdx = 0;
 

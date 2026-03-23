@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { exportAsset, downloadBlob } from "@/lib/export-utils";
+import { downloadBlob } from "@/lib/export-utils";
+import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 
 interface PatternExportDialogProps {
@@ -22,6 +23,37 @@ interface PatternExportDialogProps {
 const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
 type Unit = "px" | "mm";
 const MM_TO_PX = 3.7795275591; // 96 DPI
+
+function svgToDataUrl(svgString: string): string {
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+}
+
+function resizeSvg(svgContent: string, pxW: number, pxH: number): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgContent, "image/svg+xml");
+  const svgEl = doc.querySelector("svg");
+  if (!svgEl) throw new Error("Invalid SVG");
+  svgEl.setAttribute("width", String(pxW));
+  svgEl.setAttribute("height", String(pxH));
+  return new XMLSerializer().serializeToString(svgEl);
+}
+
+function renderPatternToCanvas(svgString: string, width: number, height: number): Promise<HTMLCanvasElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width * 2;
+      canvas.height = height * 2;
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(2, 2);
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas);
+    };
+    img.onerror = reject;
+    img.src = svgToDataUrl(svgString);
+  });
+}
 
 export function PatternExportDialog({
   open,
@@ -57,35 +89,71 @@ export function PatternExportDialog({
         return;
       }
 
-      // Rescale the SVG to the target dimensions
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svgContent, "image/svg+xml");
-      const svgEl = doc.querySelector("svg");
-      if (!svgEl) throw new Error("Invalid SVG");
+      // Resize the already-composed pattern SVG (no recoloring needed)
+      const resizedSvg = resizeSvg(svgContent, pxW, pxH);
 
-      const origVB = svgEl.getAttribute("viewBox") || "0 0 800 800";
-      svgEl.setAttribute("width", String(pxW));
-      svgEl.setAttribute("height", String(pxH));
-      // Keep viewBox as-is so the pattern tiles
+      let blob: Blob;
 
-      const resizedSvg = new XMLSerializer().serializeToString(svgEl);
+      switch (format) {
+        case "svg":
+          blob = new Blob([resizedSvg], { type: "image/svg+xml" });
+          break;
+        case "png": {
+          const canvas = await renderPatternToCanvas(resizedSvg, pxW, pxH);
+          blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
+          break;
+        }
+        case "jpg": {
+          // For JPG, ensure white bg if transparent
+          let jpgSvg = resizedSvg;
+          if (isTransparent) {
+            // Wrap with a white background
+            jpgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${pxW}" height="${pxH}" viewBox="0 0 ${pxW} ${pxH}">
+              <rect width="${pxW}" height="${pxH}" fill="#FFFFFF"/>
+              <image href="${svgToDataUrl(resizedSvg)}" width="${pxW}" height="${pxH}"/>
+            </svg>`;
+          }
+          const canvas = await renderPatternToCanvas(jpgSvg, pxW, pxH);
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext("2d")!;
+          tempCtx.fillStyle = isTransparent ? "#FFFFFF" : bgColor;
+          tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          tempCtx.drawImage(canvas, 0, 0);
+          blob = await new Promise<Blob>((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
+          break;
+        }
+        case "pdf": {
+          const canvas = await renderPatternToCanvas(resizedSvg, pxW, pxH);
+          if (isTransparent) {
+            const ctx = canvas.getContext("2d")!;
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext("2d")!;
+            tempCtx.fillStyle = "#FFFFFF";
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+            const imgData = tempCanvas.toDataURL("image/png");
+            const orientation = pxW >= pxH ? "landscape" : "portrait";
+            const pdf = new jsPDF({ orientation, unit: "px", format: [pxW, pxH] });
+            pdf.addImage(imgData, "PNG", 0, 0, pxW, pxH);
+            blob = pdf.output("blob");
+          } else {
+            const imgData = canvas.toDataURL("image/png");
+            const orientation = pxW >= pxH ? "landscape" : "portrait";
+            const pdf = new jsPDF({ orientation, unit: "px", format: [pxW, pxH] });
+            pdf.addImage(imgData, "PNG", 0, 0, pxW, pxH);
+            blob = pdf.output("blob");
+          }
+          break;
+        }
+        default:
+          throw new Error(`Unsupported format: ${format}`);
+      }
 
-      const effectiveTransparent = isTransparent && transparentAvailable;
-
-      const blob = await exportAsset({
-        format,
-        transparent: effectiveTransparent,
-        size: pxW,
-        logoColor: "#000000",
-        bgColor: isTransparent ? "#FFFFFF" : bgColor,
-        svgContent: resizedSvg,
-        fileName: projectName,
-        fileType: "svg",
-        padded: false,
-      });
-
-      const ext = format;
-      downloadBlob(blob, `${projectName}.${ext}`);
+      downloadBlob(blob, `${projectName}.${format}`);
       toast.success("Exported!");
       onOpenChange(false);
     } catch (err: any) {
@@ -94,7 +162,6 @@ export function PatternExportDialog({
       setExporting(false);
     }
   };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
