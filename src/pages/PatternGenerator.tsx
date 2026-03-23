@@ -12,8 +12,7 @@ import { ArrowLeft, Check, Copy, Download, PanelLeft, PanelLeftClose } from "luc
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { selectiveRecolorSvg, detectSvgGroups, hasRecolorableContent } from "@/lib/svg-group-utils";
-import { ExportDialog } from "@/components/workbench/ExportDialog";
-import { isValidHex } from "@/lib/color-utils";
+import { PatternExportDialog } from "@/components/workbench/PatternExportDialog";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Project = Tables<"projects">;
@@ -34,6 +33,60 @@ const checkerStyle: React.CSSProperties = {
   backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
 };
 
+/** A slider + text input combo for numeric values */
+function SliderInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  suffix = "px",
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  suffix?: string;
+}) {
+  const [text, setText] = useState(String(value));
+
+  // Sync text when slider changes externally
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  const commitText = () => {
+    const n = parseFloat(text);
+    if (!isNaN(n)) {
+      onChange(Math.max(min, Math.min(max, n)));
+    } else {
+      setText(String(value));
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+        <div className="flex items-center gap-1">
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={commitText}
+            onKeyDown={(e) => e.key === "Enter" && commitText()}
+            className="h-6 w-16 rounded-lg px-1.5 text-right font-mono text-xs border-0 bg-muted"
+          />
+          <span className="text-[10px] text-muted-foreground">{suffix}</span>
+        </div>
+      </div>
+      <Slider value={[value]} onValueChange={([v]) => onChange(v)} min={min} max={max} step={step} />
+    </div>
+  );
+}
+
 export default function PatternGenerator() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -53,12 +106,15 @@ export default function PatternGenerator() {
   const [layout, setLayout] = useState<LayoutMode>("grid");
   const [hSpacing, setHSpacing] = useState(40);
   const [vSpacing, setVSpacing] = useState(40);
+  const [rowOffset, setRowOffset] = useState(50); // percentage of cell width for offset rows
   const [angle, setAngle] = useState(0);
   const [elementSize, setElementSize] = useState(60);
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [selectedBg, setSelectedBg] = useState<string | null>(null);
   const [transparentBg, setTransparentBg] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+
+  const hasOffset = layout === "brick" || layout === "diamond" || layout === "hex";
 
   const logoColors = useMemo(() => colors.filter((c) => c.role === "logo" || c.role === "both"), [colors]);
   const bgColors = useMemo(() => colors.filter((c) => c.role === "background" || c.role === "both"), [colors]);
@@ -142,6 +198,7 @@ export default function PatternGenerator() {
     const cellH = elementSize + vSpacing;
     const cols = Math.ceil(canvasW / cellW) + 4;
     const rows = Math.ceil(canvasH / cellH) + 4;
+    const offsetPx = (cellW * rowOffset) / 100;
 
     const elements: string[] = [];
     let svgIdx = 0;
@@ -152,12 +209,12 @@ export default function PatternGenerator() {
         let y = row * cellH;
 
         if (layout === "brick" && row % 2 !== 0) {
-          x += cellW / 2;
+          x += offsetPx;
         } else if (layout === "diamond") {
-          x += (row % 2 !== 0 ? cellW / 2 : 0);
+          x += (row % 2 !== 0 ? offsetPx : 0);
           y = row * (cellH * 0.75);
         } else if (layout === "hex") {
-          x += (row % 2 !== 0 ? cellW / 2 : 0);
+          x += (row % 2 !== 0 ? offsetPx : 0);
           y = row * (cellH * 0.866);
         }
 
@@ -169,7 +226,6 @@ export default function PatternGenerator() {
           ? selectiveRecolorSvg(svg.content, activeLogo, `pat-${row}-${col}`, groups)
           : selectiveRecolorSvg(svg.content, activeLogo, `pat-${row}-${col}`);
 
-        // Extract inner SVG content
         const parser = new DOMParser();
         const doc = parser.parseFromString(recolored, "image/svg+xml");
         const svgEl = doc.querySelector("svg");
@@ -183,17 +239,6 @@ export default function PatternGenerator() {
       }
     }
 
-    // Copy style blocks from source SVGs
-    const styleBlocks: string[] = [];
-    selectedSvgs.forEach((svg, i) => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svg.content, "image/svg+xml");
-      const styles = doc.querySelectorAll("style");
-      styles.forEach(s => {
-        if (s.textContent) styleBlocks.push(s.textContent);
-      });
-    });
-
     const bgRect = transparentBg ? "" : `<rect width="${canvasW}" height="${canvasH}" fill="${activeBg}" />`;
 
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">
@@ -203,7 +248,7 @@ export default function PatternGenerator() {
         ${elements.join("\n")}
       </g>
     </svg>`;
-  }, [selectedSvgs, layout, hSpacing, vSpacing, angle, elementSize, activeLogo, activeBg, transparentBg]);
+  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, activeLogo, activeBg, transparentBg]);
 
   if (!project) {
     return (
@@ -305,34 +350,25 @@ export default function PatternGenerator() {
 
               {/* Element Size */}
               <div className="border-b p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Element Size</p>
-                  <span className="text-xs font-mono text-muted-foreground">{elementSize}px</span>
-                </div>
-                <Slider value={[elementSize]} onValueChange={([v]) => setElementSize(v)} min={20} max={200} step={2} />
+                <SliderInput label="Element Size" value={elementSize} onChange={setElementSize} min={20} max={200} step={2} />
               </div>
 
               {/* Spacing */}
-              <div className="border-b p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">H Spacing</p>
-                  <span className="text-xs font-mono text-muted-foreground">{hSpacing}px</span>
-                </div>
-                <Slider value={[hSpacing]} onValueChange={([v]) => setHSpacing(v)} min={0} max={200} step={2} />
-                <div className="flex items-center justify-between mb-3 mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">V Spacing</p>
-                  <span className="text-xs font-mono text-muted-foreground">{vSpacing}px</span>
-                </div>
-                <Slider value={[vSpacing]} onValueChange={([v]) => setVSpacing(v)} min={0} max={200} step={2} />
+              <div className="border-b p-4 space-y-4">
+                <SliderInput label="H Spacing" value={hSpacing} onChange={setHSpacing} min={0} max={200} step={2} />
+                <SliderInput label="V Spacing" value={vSpacing} onChange={setVSpacing} min={0} max={200} step={2} />
               </div>
+
+              {/* Row Offset - only for layouts with offset */}
+              {hasOffset && (
+                <div className="border-b p-4">
+                  <SliderInput label="Row Offset" value={rowOffset} onChange={setRowOffset} min={0} max={100} step={1} suffix="%" />
+                </div>
+              )}
 
               {/* Angle */}
               <div className="border-b p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rotation</p>
-                  <span className="text-xs font-mono text-muted-foreground">{angle}°</span>
-                </div>
-                <Slider value={[angle]} onValueChange={([v]) => setAngle(v)} min={-180} max={180} step={1} />
+                <SliderInput label="Rotation" value={angle} onChange={setAngle} min={-180} max={180} step={1} suffix="°" />
               </div>
 
               {/* Colors */}
@@ -406,15 +442,12 @@ export default function PatternGenerator() {
       </div>
 
       {exportOpen && patternSvg && (
-        <ExportDialog
+        <PatternExportDialog
           open={exportOpen}
           onOpenChange={setExportOpen}
-          logoColor={activeLogo}
-          bgColor={activeBg}
           svgContent={patternSvg}
           projectName={`${project.name}-pattern`}
-          fileType="svg"
-          fit="fit"
+          bgColor={activeBg}
         />
       )}
     </div>
