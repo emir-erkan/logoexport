@@ -189,7 +189,6 @@ export default function PatternGenerator() {
     [loadedSvgs, selectedFileIds]
   );
 
-  // Generate the pattern SVG
   const patternSvg = useMemo(() => {
     if (selectedSvgs.length === 0) return null;
 
