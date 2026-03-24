@@ -189,6 +189,7 @@ export default function PatternGenerator() {
     [loadedSvgs, selectedFileIds]
   );
 
+  // Generate the pattern SVG
   const patternSvg = useMemo(() => {
     if (selectedSvgs.length === 0) return null;
 
@@ -254,9 +255,11 @@ export default function PatternGenerator() {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">
       <defs><clipPath id="pattern-clip"><rect width="${canvasW}" height="${canvasH}" /></clipPath></defs>
       ${bgRect}
-      <g clip-path="url(#pattern-clip)" transform="rotate(${angle}, ${canvasW / 2}, ${canvasH / 2})">
-        ${elements.join("\n")}
-      </g>
+      <g clip-path="url(#pattern-clip)">
+  <g transform="rotate(${angle}, ${canvasW / 2}, ${canvasH / 2})">
+    ${elements.join("\n")}
+  </g>
+</g>
     </svg>`;
   }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, fileSizes, activeLogo, activeBg, transparentBg]);
 
