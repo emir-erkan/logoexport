@@ -114,6 +114,36 @@ export default function PatternGenerator() {
   const [selectedBg, setSelectedBg] = useState<string | null>(null);
   const [transparentBg, setTransparentBg] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [debouncedHSpacing, setDebouncedHSpacing] = useState(hSpacing);
+  const [debouncedVSpacing, setDebouncedVSpacing] = useState(vSpacing);
+  const [debouncedAngle, setDebouncedAngle] = useState(angle);
+  const [debouncedElementSize, setDebouncedElementSize] = useState(elementSize);
+  const [debouncedRowOffset, setDebouncedRowOffset] = useState(rowOffset);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedHSpacing(hSpacing), 150);
+    return () => clearTimeout(t);
+  }, [hSpacing]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedVSpacing(vSpacing), 150);
+    return () => clearTimeout(t);
+  }, [vSpacing]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAngle(angle), 150);
+    return () => clearTimeout(t);
+  }, [angle]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedElementSize(elementSize), 150);
+    return () => clearTimeout(t);
+  }, [elementSize]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedRowOffset(rowOffset), 150);
+    return () => clearTimeout(t);
+  }, [rowOffset]);
 
   const hasOffset = layout === "brick" || layout === "diamond" || layout === "hex";
 
@@ -200,13 +230,13 @@ export default function PatternGenerator() {
     // Use 2x diagonal to guarantee no gaps at any rotation angle
     const expandedW = diag * 2;
     const expandedH = diag * 2;
-    const cellW = elementSize + hSpacing;
-    const cellH = elementSize + vSpacing;
+    const cellW = debouncedElementSize + debouncedHSpacing;
+    const cellH = debouncedElementSize + debouncedVSpacing;
     const cols = Math.ceil(expandedW / cellW) + 4;
     const rows = Math.ceil(expandedH / cellH) + 4;
     const startX = -(expandedW - canvasW) / 2 - cellW;
     const startY = -(expandedH - canvasH) / 2 - cellH;
-    const offsetPx = (cellW * rowOffset) / 100;
+    const offsetPx = (cellW * debouncedRowOffset) / 100;
     const elements: string[] = [];
     let svgIdx = 0;
 
@@ -226,7 +256,7 @@ export default function PatternGenerator() {
         }
 
         const svg = selectedSvgs[svgIdx % selectedSvgs.length];
-        const fileSize = fileSizes[svg.file.id] ?? elementSize;
+        const fileSize = fileSizes[svg.file.id] ?? debouncedElementSize;
         svgIdx++;
 
         const groups = detectSvgGroups(svg.content);
@@ -241,8 +271,8 @@ export default function PatternGenerator() {
 
         const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
         // Center the element within the cell if it's smaller than the cell
-        const offsetX = (elementSize - fileSize) / 2;
-        const offsetY = (elementSize - fileSize) / 2;
+        const offsetX = (debouncedElementSize - fileSize) / 2;
+        const offsetY = (debouncedElementSize - fileSize) / 2;
 
         elements.push(
           `<svg x="${x + offsetX}" y="${y + offsetY}" width="${fileSize}" height="${fileSize}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>`
@@ -256,12 +286,12 @@ export default function PatternGenerator() {
       <defs><clipPath id="pattern-clip"><rect width="${canvasW}" height="${canvasH}" /></clipPath></defs>
       ${bgRect}
       <g clip-path="url(#pattern-clip)">
-  <g transform="rotate(${angle}, ${canvasW / 2}, ${canvasH / 2})">
+  <g transform="rotate(${debouncedAngle}, ${canvasW / 2}, ${canvasH / 2})">
     ${elements.join("\n")}
   </g>
 </g>
     </svg>`;
-  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, fileSizes, activeLogo, activeBg, transparentBg]);
+  }, [selectedSvgs, layout, debouncedHSpacing, debouncedVSpacing, debouncedRowOffset, debouncedAngle, debouncedElementSize, fileSizes, activeLogo, activeBg, transparentBg]);
 
   if (!project) {
     return (
