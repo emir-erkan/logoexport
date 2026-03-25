@@ -12,6 +12,7 @@ import ProjectHub from "./pages/ProjectHub";
 import Workbench from "./pages/Workbench";
 import LogoOutlines from "./pages/LogoOutlines";
 import PatternGenerator from "./pages/PatternGenerator";
+import BrandGuidelines from "./pages/BrandGuidelines";
 import SharedView from "./pages/SharedView";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/projects/:id/export" element={<ProtectedRoute><Workbench /></ProtectedRoute>} />
               <Route path="/projects/:id/outlines" element={<ProtectedRoute><LogoOutlines /></ProtectedRoute>} />
               <Route path="/projects/:id/patterns" element={<ProtectedRoute><PatternGenerator /></ProtectedRoute>} />
+              <Route path="/projects/:id/guidelines" element={<ProtectedRoute><BrandGuidelines /></ProtectedRoute>} />
               <Route path="/shared/:shareToken" element={<SharedView />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -49,7 +49,6 @@ const tools = [
     path: "guidelines",
     color: "from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20",
     iconColor: "text-emerald-600 dark:text-emerald-400",
-    comingSoon: true,
   },
 ];
 
