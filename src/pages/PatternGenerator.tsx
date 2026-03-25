@@ -219,32 +219,36 @@ export default function PatternGenerator() {
     [loadedSvgs, selectedFileIds]
   );
 
-  // Generate the pattern SVG using native SVG <pattern> + <symbol> + <use>
-  const patternSvg = useMemo(() => {
-    if (selectedSvgs.length === 0) return null;
-
-    const canvasW = 800;
-    const canvasH = 800;
+  // Expensive step: recolor SVGs — only reruns when logos or color changes, NOT on slider moves
+  const recoloredSymbols = useMemo(() => {
+    if (selectedSvgs.length === 0) return [];
     const parser = new DOMParser();
-    const n = selectedSvgs.length;
-    // Use debounced values so sliders don't cause lag
-    const cellW = debouncedElementSize + debouncedHSpacing;
-    const cellH = debouncedElementSize + debouncedVSpacing;
-
-    // Define each logo ONCE as a <symbol>
-    const symbols: string[] = [];
-    for (let i = 0; i < n; i++) {
-      const svg = selectedSvgs[i];
+    return selectedSvgs.map((svg, i) => {
       const groups = detectSvgGroups(svg.content);
       const recolored = hasRecolorableContent(groups)
         ? selectiveRecolorSvg(svg.content, activeLogo, `sym-${i}`, groups)
         : selectiveRecolorSvg(svg.content, activeLogo, `sym-${i}`);
       const doc = parser.parseFromString(recolored, "image/svg+xml");
       const svgEl = doc.querySelector("svg");
-      if (!svgEl) continue;
+      if (!svgEl) return null;
       const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
-      symbols.push(`<symbol id="s${i}" viewBox="${viewBox}">${svgEl.innerHTML}</symbol>`);
-    }
+      return { id: `s${i}`, viewBox, innerHTML: svgEl.innerHTML, fileId: svg.file.id };
+    }).filter(Boolean) as { id: string; viewBox: string; innerHTML: string; fileId: string }[];
+  }, [selectedSvgs, activeLogo]);
+
+  // Fast step: layout/spacing/rotation — reruns on sliders, but no expensive parsing
+  const patternSvg = useMemo(() => {
+    if (recoloredSymbols.length === 0) return null;
+
+    const canvasW = 800;
+    const canvasH = 800;
+    const n = recoloredSymbols.length;
+    const cellW = debouncedElementSize + debouncedHSpacing;
+    const cellH = debouncedElementSize + debouncedVSpacing;
+
+    const symbols = recoloredSymbols.map(s =>
+      `<symbol id="${s.id}" viewBox="${s.viewBox}">${s.innerHTML}</symbol>`
+    );
 
     // Build tile content based on layout
     let tileW: number;
@@ -253,7 +257,7 @@ export default function PatternGenerator() {
 
     const addRow = (yBase: number, xOffset = 0) => {
       for (let i = 0; i < n; i++) {
-        const fileSize = fileSizes[selectedSvgs[i].file.id] ?? debouncedElementSize;
+        const fileSize = fileSizes[recoloredSymbols[i].fileId] ?? debouncedElementSize;
         const ox = (debouncedElementSize - fileSize) / 2;
         const oy = (debouncedElementSize - fileSize) / 2;
         const x = i * cellW + xOffset + ox;
@@ -303,7 +307,7 @@ export default function PatternGenerator() {
   ${bgRect}
   <rect width="${canvasW}" height="${canvasH}" fill="url(#tile)"/>
 </svg>`;
-  }, [selectedSvgs, layout, debouncedHSpacing, debouncedVSpacing, debouncedRowOffset, debouncedAngle, debouncedElementSize, fileSizes, activeLogo, activeBg, transparentBg]);
+  }, [recoloredSymbols, layout, debouncedHSpacing, debouncedVSpacing, debouncedRowOffset, debouncedAngle, debouncedElementSize, fileSizes, activeBg, transparentBg]);
 
   if (!project) {
     return (
