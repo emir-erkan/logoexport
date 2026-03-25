@@ -519,7 +519,7 @@ export default function BrandGuidelines() {
             {/* Footer */}
             <section className="border-t pt-8 pb-4 text-center">
               <p className="text-xs text-muted-foreground">
-                © {new Date().getFullYear()} {project.name}. All rights reserved.
+                © {new Date().getFullYear()} {project.name}. Tüm hakları saklıdır.
               </p>
             </section>
           </div>
