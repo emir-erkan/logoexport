@@ -401,11 +401,11 @@ export default function BrandGuidelines() {
             <section id="colors" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">04</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Color Palette</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Renk Paleti</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Brand colors form a core pillar of <strong className="text-foreground">{project.name}</strong>'s visual identity.
-                  These colors should be applied consistently across logo, typography, and all communication materials.
-                  Use HEX or RGB values for digital; CMYK for print.
+                  Marka renkleri, <strong className="text-foreground">{project.name}</strong> görsel kimliğinin temel taşlarından birini oluşturmaktadır.
+                  Bu renkler logo, tipografi ve tüm iletişim materyallerinde tutarlı biçimde uygulanmalıdır.
+                  Dijital ortamlarda HEX veya RGB değerleri, baskı uygulamalarında ise CMYK değerleri kullanılması önerilir.
                 </p>
               </div>
 
