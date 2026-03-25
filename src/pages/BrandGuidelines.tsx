@@ -64,12 +64,12 @@ function isLightColor(hex: string): boolean {
 }
 
 const NAV_ITEMS = [
-  { id: "cover", label: "Cover" },
-  { id: "logos", label: "Logos" },
-  { id: "spacing", label: "Spacing" },
-  { id: "misuse", label: "Misuse" },
-  { id: "colors", label: "Colors" },
-  { id: "typography", label: "Typography" },
+  { id: "cover", label: "Kapak" },
+  { id: "logos", label: "Logolar" },
+  { id: "spacing", label: "Boşluk & Boyut" },
+  { id: "misuse", label: "Hatalı Kullanım" },
+  { id: "colors", label: "Renkler" },
+  { id: "typography", label: "Tipografi" },
 ];
 
 export default function BrandGuidelines() {
@@ -181,7 +181,7 @@ export default function BrandGuidelines() {
               {project.name}
             </button>
           )}
-          <span className="text-xs text-muted-foreground">/ Brand Guidelines</span>
+          <span className="text-xs text-muted-foreground">/ Marka Kimliği Kılavuzu</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -225,10 +225,10 @@ export default function BrandGuidelines() {
                   }} />
                 )}
                 <h1 className="text-3xl md:text-5xl font-bold tracking-tight" style={{ color: "#fff" }}>
-                  Brand Identity<br />Guidelines
+                  Marka Kimliği<br />Kılavuzu
                 </h1>
                 <p className="mt-4 text-sm opacity-60" style={{ color: "#fff" }}>
-                  {project.name} — {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                  {project.name} — {new Date().toLocaleDateString("tr-TR", { month: "long", year: "numeric" })}
                 </p>
               </div>
               {/* Decorative circles */}
@@ -238,12 +238,12 @@ export default function BrandGuidelines() {
 
             {/* ABOUT */}
             <section className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">About this guide</p>
-              <h2 className="text-2xl font-bold tracking-tight">Overview</h2>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Bu kılavuz hakkında</p>
+              <h2 className="text-2xl font-bold tracking-tight">Hakkında</h2>
               <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                This guide ensures the consistent and correct application of <strong className="text-foreground">{project.name}</strong>'s visual identity.
-                From logo usage to color palettes, typography to application examples, it covers all fundamental visual elements.
-                Adhering to these guidelines across all use cases is recommended. Inconsistent applications may undermine brand integrity.
+                Bu kılavuz, <strong className="text-foreground">{project.name}</strong> markasının görsel kimliğinin doğru ve tutarlı biçimde uygulanması için hazırlanmıştır.
+                Logo kullanımından renk paletine, tipografiden uygulama örneklerine kadar tüm temel görsel unsurları kapsamaktadır.
+                Bu kılavuzda yer alan kurallara tüm kullanım senaryolarında sadık kalınması önerilir. Aksi uygulamalar marka bütünlüğünü zedeleyebilir.
               </p>
             </section>
 
@@ -251,10 +251,10 @@ export default function BrandGuidelines() {
             <section id="logos" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">01</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Logo Variants</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Logolar</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  The logo is presented in multiple variants. Each variant is designed for different use cases and layout spaces.
-                  The primary logo should always be the first choice; other variants should only be used when layout constraints require them.
+                  Logo farklı varyasyonlarda sunulmaktadır. Her varyasyon, farklı kullanım senaryoları ve yerleşim alanları için tasarlanmıştır.
+                  Ana logo her zaman ilk tercih olmalıdır; diğer varyasyonlar yalnızca alan kısıtı veya tasarım gereklilikleri doğrultusunda kullanılmalıdır.
                 </p>
               </div>
 
@@ -285,7 +285,7 @@ export default function BrandGuidelines() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed p-12 text-center">
-                  <p className="text-sm text-muted-foreground">No logos uploaded yet. Upload SVG files in the Logo Export tool.</p>
+                  <p className="text-sm text-muted-foreground">Henüz logo yüklenmedi. Logo Dışa Aktarma aracında SVG dosyaları yükleyin.</p>
                 </div>
               )}
             </section>
@@ -294,29 +294,34 @@ export default function BrandGuidelines() {
             <section id="spacing" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">02</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Clear Space & Minimum Sizes</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Logo Alanı & Minimum Boyutlar</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Sufficient clear space must always be maintained around the logo. No graphics, text, or design elements should appear within this area.
-                  The minimum clear space is defined as <strong className="text-foreground">2×</strong> the height of the icon element on all sides.
+                  Logonun çevresinde her zaman yeterli boşluk bırakılmalıdır. Bu alan içerisinde herhangi bir grafik, metin veya tasarım unsuru yer almamalıdır.
+                  Minimum boşluk mesafesi, ikon yüksekliği baz alınarak <strong className="text-foreground">2×</strong> olarak belirlenmiştir.
                 </p>
               </div>
 
               {loadedSvgs[0] && (
-                <div className="rounded-2xl border bg-card p-8">
-                  <div className="relative mx-auto flex items-center justify-center" style={{ maxWidth: 360 }}>
+                <div className="rounded-2xl border bg-card p-12">
+                  <div className="relative mx-auto flex items-center justify-center" style={{ maxWidth: 400, minHeight: 260 }}>
                     {/* Dashed boundary */}
-                    <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20" />
+                    <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/30" />
                     {/* Spacing labels */}
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
-                    <div className="absolute -left-6 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
-                    <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    <div className="absolute -left-7 top-1/2 -translate-y-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    <div className="absolute -right-7 top-1/2 -translate-y-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    {/* Dimension lines */}
+                    <div className="absolute top-0 left-1/2 h-[60px] w-px -translate-x-1/2 bg-muted-foreground/20" />
+                    <div className="absolute bottom-0 left-1/2 h-[60px] w-px -translate-x-1/2 bg-muted-foreground/20" />
+                    <div className="absolute left-0 top-1/2 h-px w-[60px] -translate-y-1/2 bg-muted-foreground/20" />
+                    <div className="absolute right-0 top-1/2 h-px w-[60px] -translate-y-1/2 bg-muted-foreground/20" />
                     <div
-                      className="m-12 max-w-[180px]"
+                      className="w-[140px]"
                       dangerouslySetInnerHTML={{
                         __html: loadedSvgs[0].content
-                          .replace(/width="[^"]*"/, 'width="100%"')
-                          .replace(/height="[^"]*"/, 'height="100%"')
+                          .replace(/width="[^"]*"/, 'width="140"')
+                          .replace(/height="[^"]*"/, 'height="auto"')
                       }}
                     />
                   </div>
@@ -325,21 +330,21 @@ export default function BrandGuidelines() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border p-5">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Digital</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Dijital</p>
                   <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Primary logo</span><span className="font-mono font-semibold">min 220px height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Horizontal logo</span><span className="font-mono font-semibold">min 300px width</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Icon only</span><span className="font-mono font-semibold">min 80px height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Wordmark only</span><span className="font-mono font-semibold">min 150px width</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Ana logo (dikey)</span><span className="font-mono font-semibold">min 220px yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yatay logo</span><span className="font-mono font-semibold">min 300px genişlik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca ikon</span><span className="font-mono font-semibold">min 80px yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca yazı tipi</span><span className="font-mono font-semibold">min 150px genişlik</span></div>
                   </div>
                 </div>
                 <div className="rounded-xl border p-5">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Print</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Baskı</p>
                   <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Primary logo</span><span className="font-mono font-semibold">min 60mm height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Horizontal logo</span><span className="font-mono font-semibold">min 80mm width</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Icon only</span><span className="font-mono font-semibold">min 25mm height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Wordmark only</span><span className="font-mono font-semibold">min 40mm width</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Ana logo (dikey)</span><span className="font-mono font-semibold">min 60mm yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yatay logo</span><span className="font-mono font-semibold">min 80mm genişlik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca ikon</span><span className="font-mono font-semibold">min 25mm yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca yazı tipi</span><span className="font-mono font-semibold">min 40mm genişlik</span></div>
                   </div>
                 </div>
               </div>
@@ -349,37 +354,38 @@ export default function BrandGuidelines() {
             <section id="misuse" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">03</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Incorrect Usage</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Hatalı Kullanım</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  The following uses may damage brand integrity and should be avoided at all times.
+                  Aşağıdaki kullanımlar marka bütünlüğünü zedeleyebilir ve kaçınılması önerilir.
                 </p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
                 {[
-                  { label: "Don't distort proportions", transform: "scaleX(1.4)" },
-                  { label: "Don't rotate or skew", transform: "rotate(15deg)" },
-                  { label: "Don't use unapproved colors", filter: "hue-rotate(120deg)" },
-                  { label: "Don't add shadows or effects", filter: "drop-shadow(4px 4px 6px rgba(0,0,0,0.5))" },
-                  { label: "Don't use low contrast", opacity: "0.2" },
-                  { label: "Don't go below minimum size", transform: "scale(0.3)" },
+                  { label: "Logonun oranlarını bozmayın", style: { transform: "scaleX(1.5) scaleY(0.7)" } },
+                  { label: "Logoyu döndürmeyin veya eğmeyin", style: { transform: "rotate(15deg) skewX(10deg)" } },
+                  { label: "Onaysız renkler kullanmayın", style: { filter: "hue-rotate(120deg) saturate(2)" } },
+                  { label: "Logoya gölge veya efekt eklemeyin", style: { filter: "drop-shadow(4px 4px 6px rgba(0,0,0,0.5))" } },
+                  { label: "Arka planla düşük kontrast oluşturmayın", style: { opacity: 0.15 } },
+                  { label: "Minimum boyutun altında kullanmayın", style: { transform: "scale(0.25)" } },
                 ].map((rule, i) => (
                   <div key={i} className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-                    <div className="mb-3 flex h-20 items-center justify-center overflow-hidden rounded-lg bg-background">
-                      {loadedSvgs[0] && (
+                    <div className="mb-3 flex h-24 items-center justify-center overflow-hidden rounded-lg bg-card">
+                      {loadedSvgs[0] ? (
                         <div
-                          className="max-w-[60px]"
-                          style={{
-                            transform: rule.transform,
-                            filter: rule.filter,
-                            opacity: rule.opacity,
-                          }}
-                          dangerouslySetInnerHTML={{
-                            __html: loadedSvgs[0].content
-                              .replace(/width="[^"]*"/, 'width="100%"')
-                              .replace(/height="[^"]*"/, 'height="100%"')
-                          }}
-                        />
+                          style={{ width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                          <div
+                            style={rule.style}
+                            dangerouslySetInnerHTML={{
+                              __html: loadedSvgs[0].content
+                                .replace(/width="[^"]*"/, 'width="60"')
+                                .replace(/height="[^"]*"/, 'height="60"')
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-12 w-12 rounded bg-muted" />
                       )}
                     </div>
                     <div className="flex items-start gap-1.5">
@@ -395,11 +401,11 @@ export default function BrandGuidelines() {
             <section id="colors" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">04</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Color Palette</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Renk Paleti</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Brand colors form a core pillar of <strong className="text-foreground">{project.name}</strong>'s visual identity.
-                  These colors should be applied consistently across logo, typography, and all communication materials.
-                  Use HEX or RGB values for digital; CMYK for print.
+                  Marka renkleri, <strong className="text-foreground">{project.name}</strong> görsel kimliğinin temel taşlarından birini oluşturmaktadır.
+                  Bu renkler logo, tipografi ve tüm iletişim materyallerinde tutarlı biçimde uygulanmalıdır.
+                  Dijital ortamlarda HEX veya RGB değerleri, baskı uygulamalarında ise CMYK değerleri kullanılması önerilir.
                 </p>
               </div>
 
@@ -424,15 +430,15 @@ export default function BrandGuidelines() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed p-12 text-center">
-                  <p className="text-sm text-muted-foreground">No colors defined. Add colors in the Logo Export tool.</p>
+                  <p className="text-sm text-muted-foreground">Henüz renk tanımlanmadı. Logo Dışa Aktarma aracında renkler ekleyin.</p>
                 </div>
               )}
 
               {/* Logo on color backgrounds */}
               {loadedSvgs[0] && colors.length > 0 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Logo on Brand Colors</h3>
-                  <p className="text-sm text-muted-foreground">Approved logo and background color combinations for maximum visual impact and readability.</p>
+                  <h3 className="text-lg font-semibold">Marka Renkleri Üzerinde Logo</h3>
+                  <p className="text-sm text-muted-foreground">Maksimum görsel etki ve okunabilirlik için onaylı logo ve arka plan renk kombinasyonları.</p>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {colors.map((color) => {
                       const light = isLightColor(color.hex);
@@ -460,36 +466,36 @@ export default function BrandGuidelines() {
             <section id="typography" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">05</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Typography</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Tipografi</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Typography plays a key role in expressing the brand's personality. A clear typographic hierarchy ensures consistency and professionalism across all materials.
+                  Tipografi, markanın kişiliğini ifade etmede kilit bir rol oynar. Net bir tipografik hiyerarşi, tüm materyallerde tutarlılık ve profesyonellik sağlar.
                 </p>
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="rounded-2xl border p-6 space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Display / Headlines</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Başlıklar</p>
                   <div className="space-y-3">
-                    <p className="text-3xl font-bold tracking-tight">Aa Bb Cc Dd</p>
-                    <p className="text-xl font-semibold">Ee Ff Gg Hh Ii</p>
-                    <p className="text-base font-medium">Jj Kk Ll Mm Nn</p>
+                    <p className="text-3xl font-bold tracking-tight">Aa Bb Cc Çç Dd</p>
+                    <p className="text-xl font-semibold">Ee Ff Gg Ğğ Hh</p>
+                    <p className="text-base font-medium">Iı İi Jj Kk Ll</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">Used for headlines, hero sections, and high-impact communication.</p>
+                  <p className="text-xs text-muted-foreground">Başlıklar, hero bölümleri ve yüksek etkili iletişim için kullanılır.</p>
                 </div>
                 <div className="rounded-2xl border p-6 space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Body / UI</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Gövde / Arayüz</p>
                   <div className="space-y-3">
-                    <p className="text-sm font-semibold">SemiBold — Subheadings</p>
-                    <p className="text-sm font-medium">Medium — Labels, emphasis</p>
-                    <p className="text-sm">Regular — Body text, descriptions</p>
-                    <p className="text-sm font-light text-muted-foreground">Light — Supporting text</p>
+                    <p className="text-sm font-semibold">SemiBold — Alt başlıklar</p>
+                    <p className="text-sm font-medium">Medium — Etiketler, vurgu</p>
+                    <p className="text-sm">Regular — Gövde metni, açıklamalar</p>
+                    <p className="text-sm font-light text-muted-foreground">Light — Destekleyici metin</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">Used for body text, UI elements, and all general-purpose communication.</p>
+                  <p className="text-xs text-muted-foreground">Gövde metni, arayüz unsurları ve genel amaçlı iletişim için kullanılır.</p>
                 </div>
               </div>
 
               <div className="rounded-2xl border p-6 space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Type Scale</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Yazı Tipi Ölçeği</p>
                 <div className="space-y-3">
                   {[
                     { name: "Display", size: "48px", weight: "Bold", cls: "text-5xl font-bold" },
@@ -513,7 +519,7 @@ export default function BrandGuidelines() {
             {/* Footer */}
             <section className="border-t pt-8 pb-4 text-center">
               <p className="text-xs text-muted-foreground">
-                © {new Date().getFullYear()} {project.name}. All rights reserved.
+                © {new Date().getFullYear()} {project.name}. Tüm hakları saklıdır.
               </p>
             </section>
           </div>
