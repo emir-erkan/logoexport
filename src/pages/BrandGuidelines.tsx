@@ -181,7 +181,7 @@ export default function BrandGuidelines() {
               {project.name}
             </button>
           )}
-          <span className="text-xs text-muted-foreground">/ Brand Guidelines</span>
+          <span className="text-xs text-muted-foreground">/ Marka Kimliği Kılavuzu</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
