@@ -225,10 +225,10 @@ export default function BrandGuidelines() {
                   }} />
                 )}
                 <h1 className="text-3xl md:text-5xl font-bold tracking-tight" style={{ color: "#fff" }}>
-                  Brand Identity<br />Guidelines
+                  Marka Kimliği<br />Kılavuzu
                 </h1>
                 <p className="mt-4 text-sm opacity-60" style={{ color: "#fff" }}>
-                  {project.name} — {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                  {project.name} — {new Date().toLocaleDateString("tr-TR", { month: "long", year: "numeric" })}
                 </p>
               </div>
               {/* Decorative circles */}
