@@ -238,12 +238,12 @@ export default function BrandGuidelines() {
 
             {/* ABOUT */}
             <section className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">About this guide</p>
-              <h2 className="text-2xl font-bold tracking-tight">Overview</h2>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Bu kılavuz hakkında</p>
+              <h2 className="text-2xl font-bold tracking-tight">Hakkında</h2>
               <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                This guide ensures the consistent and correct application of <strong className="text-foreground">{project.name}</strong>'s visual identity.
-                From logo usage to color palettes, typography to application examples, it covers all fundamental visual elements.
-                Adhering to these guidelines across all use cases is recommended. Inconsistent applications may undermine brand integrity.
+                Bu kılavuz, <strong className="text-foreground">{project.name}</strong> markasının görsel kimliğinin doğru ve tutarlı biçimde uygulanması için hazırlanmıştır.
+                Logo kullanımından renk paletine, tipografiden uygulama örneklerine kadar tüm temel görsel unsurları kapsamaktadır.
+                Bu kılavuzda yer alan kurallara tüm kullanım senaryolarında sadık kalınması önerilir. Aksi uygulamalar marka bütünlüğünü zedeleyebilir.
               </p>
             </section>
 
