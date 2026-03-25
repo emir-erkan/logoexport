@@ -354,37 +354,38 @@ export default function BrandGuidelines() {
             <section id="misuse" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">03</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Incorrect Usage</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Hatalı Kullanım</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  The following uses may damage brand integrity and should be avoided at all times.
+                  Aşağıdaki kullanımlar marka bütünlüğünü zedeleyebilir ve kaçınılması önerilir.
                 </p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
                 {[
-                  { label: "Don't distort proportions", transform: "scaleX(1.4)" },
-                  { label: "Don't rotate or skew", transform: "rotate(15deg)" },
-                  { label: "Don't use unapproved colors", filter: "hue-rotate(120deg)" },
-                  { label: "Don't add shadows or effects", filter: "drop-shadow(4px 4px 6px rgba(0,0,0,0.5))" },
-                  { label: "Don't use low contrast", opacity: "0.2" },
-                  { label: "Don't go below minimum size", transform: "scale(0.3)" },
+                  { label: "Logonun oranlarını bozmayın", style: { transform: "scaleX(1.5) scaleY(0.7)" } },
+                  { label: "Logoyu döndürmeyin veya eğmeyin", style: { transform: "rotate(15deg) skewX(10deg)" } },
+                  { label: "Onaysız renkler kullanmayın", style: { filter: "hue-rotate(120deg) saturate(2)" } },
+                  { label: "Logoya gölge veya efekt eklemeyin", style: { filter: "drop-shadow(4px 4px 6px rgba(0,0,0,0.5))" } },
+                  { label: "Arka planla düşük kontrast oluşturmayın", style: { opacity: 0.15 } },
+                  { label: "Minimum boyutun altında kullanmayın", style: { transform: "scale(0.25)" } },
                 ].map((rule, i) => (
                   <div key={i} className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-                    <div className="mb-3 flex h-20 items-center justify-center overflow-hidden rounded-lg bg-background">
-                      {loadedSvgs[0] && (
+                    <div className="mb-3 flex h-24 items-center justify-center overflow-hidden rounded-lg bg-card">
+                      {loadedSvgs[0] ? (
                         <div
-                          className="max-w-[60px]"
-                          style={{
-                            transform: rule.transform,
-                            filter: rule.filter,
-                            opacity: rule.opacity,
-                          }}
-                          dangerouslySetInnerHTML={{
-                            __html: loadedSvgs[0].content
-                              .replace(/width="[^"]*"/, 'width="100%"')
-                              .replace(/height="[^"]*"/, 'height="100%"')
-                          }}
-                        />
+                          style={{ width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                          <div
+                            style={rule.style}
+                            dangerouslySetInnerHTML={{
+                              __html: loadedSvgs[0].content
+                                .replace(/width="[^"]*"/, 'width="60"')
+                                .replace(/height="[^"]*"/, 'height="60"')
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-12 w-12 rounded bg-muted" />
                       )}
                     </div>
                     <div className="flex items-start gap-1.5">
