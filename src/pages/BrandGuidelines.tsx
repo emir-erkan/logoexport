@@ -437,8 +437,8 @@ export default function BrandGuidelines() {
               {/* Logo on color backgrounds */}
               {loadedSvgs[0] && colors.length > 0 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Logo on Brand Colors</h3>
-                  <p className="text-sm text-muted-foreground">Approved logo and background color combinations for maximum visual impact and readability.</p>
+                  <h3 className="text-lg font-semibold">Marka Renkleri Üzerinde Logo</h3>
+                  <p className="text-sm text-muted-foreground">Maksimum görsel etki ve okunabilirlik için onaylı logo ve arka plan renk kombinasyonları.</p>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {colors.map((color) => {
                       const light = isLightColor(color.hex);
