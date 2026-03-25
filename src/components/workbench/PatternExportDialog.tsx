@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { downloadBlob } from "@/lib/export-utils";
+
 import { toast } from "sonner";
 
 interface PatternExportDialogProps {
@@ -32,9 +33,29 @@ function resizeSvg(svgContent: string, pxW: number, pxH: number): string {
   const doc = parser.parseFromString(svgContent, "image/svg+xml");
   const svgEl = doc.querySelector("svg");
   if (!svgEl) throw new Error("Invalid SVG");
+
+  // Update root SVG canvas size and coordinate space
   svgEl.setAttribute("width", String(pxW));
   svgEl.setAttribute("height", String(pxH));
-  // Do NOT change viewBox — pattern coordinates are in userSpaceOnUse (800x800 space)
+  svgEl.setAttribute("viewBox", `0 0 ${pxW} ${pxH}`);
+
+  // Update all direct child rects (background + pattern fill rect) to new dimensions
+  svgEl.querySelectorAll(":scope > rect").forEach(rect => {
+    rect.setAttribute("width", String(pxW));
+    rect.setAttribute("height", String(pxH));
+  });
+
+  // Update pattern rotation center to new canvas center
+  const pattern = svgEl.querySelector("pattern");
+  if (pattern) {
+    const transform = pattern.getAttribute("patternTransform") || "";
+    const updated = transform.replace(
+      /rotate\(([^,)]+)(?:,\s*[^,)]+,\s*[^)]+)?\)/,
+      (_: string, ang: string) => `rotate(${ang}, ${pxW / 2}, ${pxH / 2})`
+    );
+    pattern.setAttribute("patternTransform", updated);
+  }
+
   return new XMLSerializer().serializeToString(svgEl);
 }
 
@@ -132,7 +153,7 @@ export function PatternExportDialog({
           const parser = new DOMParser();
           const svgDoc = parser.parseFromString(resizedSvg, "image/svg+xml");
           const svgElement = svgDoc.querySelector("svg") as SVGSVGElement;
-          if (!svgElement) throw new Error("Invalid SVG for PDF");
+          if (!svgElement) throw new Error("Invalid SVG for PDF export");
           await svg2pdf(svgElement, pdf, { x: 0, y: 0, width: pxW, height: pxH });
           blob = pdf.output("blob");
           break;

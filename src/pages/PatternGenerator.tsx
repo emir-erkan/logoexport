@@ -227,8 +227,9 @@ export default function PatternGenerator() {
     const canvasH = 800;
     const parser = new DOMParser();
     const n = selectedSvgs.length;
-    const cellW = elementSize + hSpacing;
-    const cellH = elementSize + vSpacing;
+    // Use debounced values so sliders don't cause lag
+    const cellW = debouncedElementSize + debouncedHSpacing;
+    const cellH = debouncedElementSize + debouncedVSpacing;
 
     // Define each logo ONCE as a <symbol>
     const symbols: string[] = [];
@@ -252,11 +253,12 @@ export default function PatternGenerator() {
 
     const addRow = (yBase: number, xOffset = 0) => {
       for (let i = 0; i < n; i++) {
-        const fileSize = fileSizes[selectedSvgs[i].file.id] ?? elementSize;
-        const ox = (elementSize - fileSize) / 2;
-        const oy = (elementSize - fileSize) / 2;
+        const fileSize = fileSizes[selectedSvgs[i].file.id] ?? debouncedElementSize;
+        const ox = (debouncedElementSize - fileSize) / 2;
+        const oy = (debouncedElementSize - fileSize) / 2;
         const x = i * cellW + xOffset + ox;
         const y = yBase + oy;
+        // xlink:href required for Adobe Illustrator compatibility
         uses.push(`<use xlink:href="#s${i}" x="${x}" y="${y}" width="${fileSize}" height="${fileSize}"/>`);
         // Wraparound copy so offset rows tile seamlessly
         if (xOffset !== 0) {
@@ -265,7 +267,7 @@ export default function PatternGenerator() {
       }
     };
 
-    const offsetPx = (cellW * rowOffset) / 100;
+    const offsetPx = (cellW * debouncedRowOffset) / 100;
 
     if (layout === "grid") {
       tileW = n * cellW;
@@ -288,19 +290,20 @@ export default function PatternGenerator() {
       addRow(cellH * 0.866, offsetPx);
     }
 
-    const bgRect = transparentBg ? "" : `<rect width="100%" height="100%" fill="${activeBg}"/>`;
+    // Use concrete pixel values (not %) and rotate around canvas center
+    const bgRect = transparentBg ? "" : `<rect width="${canvasW}" height="${canvasH}" fill="${activeBg}"/>`;
 
     return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">
   <defs>
     ${symbols.join("\n    ")}
-    <pattern id="tile" x="0" y="0" width="${tileW}" height="${tileH}" patternUnits="userSpaceOnUse" patternTransform="rotate(${angle})" overflow="visible">
+    <pattern id="tile" x="0" y="0" width="${tileW}" height="${tileH}" patternUnits="userSpaceOnUse" patternTransform="rotate(${debouncedAngle}, ${canvasW / 2}, ${canvasH / 2})" overflow="visible">
       ${uses.join("\n      ")}
     </pattern>
   </defs>
   ${bgRect}
-  <rect width="100%" height="100%" fill="url(#tile)"/>
+  <rect width="${canvasW}" height="${canvasH}" fill="url(#tile)"/>
 </svg>`;
-  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, fileSizes, activeLogo, activeBg, transparentBg]);
+  }, [selectedSvgs, layout, debouncedHSpacing, debouncedVSpacing, debouncedRowOffset, debouncedAngle, debouncedElementSize, fileSizes, activeLogo, activeBg, transparentBg]);
 
   if (!project) {
     return (
