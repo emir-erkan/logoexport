@@ -64,12 +64,12 @@ function isLightColor(hex: string): boolean {
 }
 
 const NAV_ITEMS = [
-  { id: "cover", label: "Cover" },
-  { id: "logos", label: "Logos" },
-  { id: "spacing", label: "Spacing" },
-  { id: "misuse", label: "Misuse" },
-  { id: "colors", label: "Colors" },
-  { id: "typography", label: "Typography" },
+  { id: "cover", label: "Kapak" },
+  { id: "logos", label: "Logolar" },
+  { id: "spacing", label: "Boşluk & Boyut" },
+  { id: "misuse", label: "Hatalı Kullanım" },
+  { id: "colors", label: "Renkler" },
+  { id: "typography", label: "Tipografi" },
 ];
 
 export default function BrandGuidelines() {
