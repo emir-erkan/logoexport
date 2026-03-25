@@ -474,23 +474,23 @@ export default function BrandGuidelines() {
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="rounded-2xl border p-6 space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Display / Headlines</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Başlıklar</p>
                   <div className="space-y-3">
-                    <p className="text-3xl font-bold tracking-tight">Aa Bb Cc Dd</p>
-                    <p className="text-xl font-semibold">Ee Ff Gg Hh Ii</p>
-                    <p className="text-base font-medium">Jj Kk Ll Mm Nn</p>
+                    <p className="text-3xl font-bold tracking-tight">Aa Bb Cc Çç Dd</p>
+                    <p className="text-xl font-semibold">Ee Ff Gg Ğğ Hh</p>
+                    <p className="text-base font-medium">Iı İi Jj Kk Ll</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">Used for headlines, hero sections, and high-impact communication.</p>
+                  <p className="text-xs text-muted-foreground">Başlıklar, hero bölümleri ve yüksek etkili iletişim için kullanılır.</p>
                 </div>
                 <div className="rounded-2xl border p-6 space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Body / UI</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Gövde / Arayüz</p>
                   <div className="space-y-3">
-                    <p className="text-sm font-semibold">SemiBold — Subheadings</p>
-                    <p className="text-sm font-medium">Medium — Labels, emphasis</p>
-                    <p className="text-sm">Regular — Body text, descriptions</p>
-                    <p className="text-sm font-light text-muted-foreground">Light — Supporting text</p>
+                    <p className="text-sm font-semibold">SemiBold — Alt başlıklar</p>
+                    <p className="text-sm font-medium">Medium — Etiketler, vurgu</p>
+                    <p className="text-sm">Regular — Gövde metni, açıklamalar</p>
+                    <p className="text-sm font-light text-muted-foreground">Light — Destekleyici metin</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">Used for body text, UI elements, and all general-purpose communication.</p>
+                  <p className="text-xs text-muted-foreground">Gövde metni, arayüz unsurları ve genel amaçlı iletişim için kullanılır.</p>
                 </div>
               </div>
 
