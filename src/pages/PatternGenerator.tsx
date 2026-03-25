@@ -219,79 +219,88 @@ export default function PatternGenerator() {
     [loadedSvgs, selectedFileIds]
   );
 
-  // Generate the pattern SVG
+  // Generate the pattern SVG using native SVG <pattern> + <symbol> + <use>
   const patternSvg = useMemo(() => {
     if (selectedSvgs.length === 0) return null;
 
     const canvasW = 800;
     const canvasH = 800;
-    // Calculate expanded area to cover rotation + ensure edge coverage
-    const diag = Math.sqrt(canvasW * canvasW + canvasH * canvasH);
-    // Use 2x diagonal to guarantee no gaps at any rotation angle
-    const expandedW = diag * 2;
-    const expandedH = diag * 2;
-    const cellW = debouncedElementSize + debouncedHSpacing;
-    const cellH = debouncedElementSize + debouncedVSpacing;
-    const cols = Math.ceil(expandedW / cellW) + 4;
-    const rows = Math.ceil(expandedH / cellH) + 4;
-    const startX = -(expandedW - canvasW) / 2 - cellW;
-    const startY = -(expandedH - canvasH) / 2 - cellH;
-    const offsetPx = (cellW * debouncedRowOffset) / 100;
-    const elements: string[] = [];
-    let svgIdx = 0;
+    const parser = new DOMParser();
+    const n = selectedSvgs.length;
+    const cellW = elementSize + hSpacing;
+    const cellH = elementSize + vSpacing;
 
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        let x = startX + col * cellW;
-        let y = startY + row * cellH;
-
-        if (layout === "brick" && row % 2 !== 0) {
-          x += offsetPx;
-        } else if (layout === "diamond") {
-          x += (row % 2 !== 0 ? offsetPx : 0);
-          y = row * (cellH * 0.75);
-        } else if (layout === "hex") {
-          x += (row % 2 !== 0 ? offsetPx : 0);
-          y = row * (cellH * 0.866);
-        }
-
-        const svg = selectedSvgs[svgIdx % selectedSvgs.length];
-        const fileSize = fileSizes[svg.file.id] ?? debouncedElementSize;
-        svgIdx++;
-
-        const groups = detectSvgGroups(svg.content);
-        const recolored = hasRecolorableContent(groups)
-          ? selectiveRecolorSvg(svg.content, activeLogo, `pat-${row}-${col}`, groups)
-          : selectiveRecolorSvg(svg.content, activeLogo, `pat-${row}-${col}`);
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(recolored, "image/svg+xml");
-        const svgEl = doc.querySelector("svg");
-        if (!svgEl) continue;
-
-        const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
-        // Center the element within the cell if it's smaller than the cell
-        const offsetX = (debouncedElementSize - fileSize) / 2;
-        const offsetY = (debouncedElementSize - fileSize) / 2;
-
-        elements.push(
-          `<svg x="${x + offsetX}" y="${y + offsetY}" width="${fileSize}" height="${fileSize}" viewBox="${viewBox}">${svgEl.innerHTML}</svg>`
-        );
-      }
+    // Define each logo ONCE as a <symbol>
+    const symbols: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const svg = selectedSvgs[i];
+      const groups = detectSvgGroups(svg.content);
+      const recolored = hasRecolorableContent(groups)
+        ? selectiveRecolorSvg(svg.content, activeLogo, `sym-${i}`, groups)
+        : selectiveRecolorSvg(svg.content, activeLogo, `sym-${i}`);
+      const doc = parser.parseFromString(recolored, "image/svg+xml");
+      const svgEl = doc.querySelector("svg");
+      if (!svgEl) continue;
+      const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
+      symbols.push(`<symbol id="s${i}" viewBox="${viewBox}">${svgEl.innerHTML}</symbol>`);
     }
 
-    const bgRect = transparentBg ? "" : `<rect width="${canvasW}" height="${canvasH}" fill="${activeBg}" />`;
+    // Build tile content based on layout
+    let tileW: number;
+    let tileH: number;
+    const uses: string[] = [];
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">
-      <defs><clipPath id="pattern-clip"><rect width="${canvasW}" height="${canvasH}" /></clipPath></defs>
-      ${bgRect}
-      <g clip-path="url(#pattern-clip)">
-  <g transform="rotate(${debouncedAngle}, ${canvasW / 2}, ${canvasH / 2})">
-    ${elements.join("\n")}
-  </g>
-</g>
-    </svg>`;
-  }, [selectedSvgs, layout, debouncedHSpacing, debouncedVSpacing, debouncedRowOffset, debouncedAngle, debouncedElementSize, fileSizes, activeLogo, activeBg, transparentBg]);
+    const addRow = (yBase: number, xOffset = 0) => {
+      for (let i = 0; i < n; i++) {
+        const fileSize = fileSizes[selectedSvgs[i].file.id] ?? elementSize;
+        const ox = (elementSize - fileSize) / 2;
+        const oy = (elementSize - fileSize) / 2;
+        const x = i * cellW + xOffset + ox;
+        const y = yBase + oy;
+        uses.push(`<use xlink:href="#s${i}" x="${x}" y="${y}" width="${fileSize}" height="${fileSize}"/>`);
+        // Wraparound copy so offset rows tile seamlessly
+        if (xOffset !== 0) {
+          uses.push(`<use xlink:href="#s${i}" x="${x - n * cellW}" y="${y}" width="${fileSize}" height="${fileSize}"/>`);
+        }
+      }
+    };
+
+    const offsetPx = (cellW * rowOffset) / 100;
+
+    if (layout === "grid") {
+      tileW = n * cellW;
+      tileH = cellH;
+      addRow(0);
+    } else if (layout === "brick") {
+      tileW = n * cellW;
+      tileH = cellH * 2;
+      addRow(0);
+      addRow(cellH, offsetPx);
+    } else if (layout === "diamond") {
+      tileW = n * cellW;
+      tileH = cellH * 0.75 * 2;
+      addRow(0);
+      addRow(cellH * 0.75, offsetPx);
+    } else {
+      tileW = n * cellW;
+      tileH = cellH * 0.866 * 2;
+      addRow(0);
+      addRow(cellH * 0.866, offsetPx);
+    }
+
+    const bgRect = transparentBg ? "" : `<rect width="100%" height="100%" fill="${activeBg}"/>`;
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">
+  <defs>
+    ${symbols.join("\n    ")}
+    <pattern id="tile" x="0" y="0" width="${tileW}" height="${tileH}" patternUnits="userSpaceOnUse" patternTransform="rotate(${angle})" overflow="visible">
+      ${uses.join("\n      ")}
+    </pattern>
+  </defs>
+  ${bgRect}
+  <rect width="100%" height="100%" fill="url(#tile)"/>
+</svg>`;
+  }, [selectedSvgs, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, fileSizes, activeLogo, activeBg, transparentBg]);
 
   if (!project) {
     return (

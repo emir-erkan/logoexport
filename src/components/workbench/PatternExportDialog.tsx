@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { downloadBlob } from "@/lib/export-utils";
-import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 
 interface PatternExportDialogProps {
@@ -35,6 +34,7 @@ function resizeSvg(svgContent: string, pxW: number, pxH: number): string {
   if (!svgEl) throw new Error("Invalid SVG");
   svgEl.setAttribute("width", String(pxW));
   svgEl.setAttribute("height", String(pxH));
+  // Do NOT change viewBox — pattern coordinates are in userSpaceOnUse (800x800 space)
   return new XMLSerializer().serializeToString(svgEl);
 }
 
@@ -125,28 +125,16 @@ export function PatternExportDialog({
           break;
         }
         case "pdf": {
-          const canvas = await renderPatternToCanvas(resizedSvg, pxW, pxH);
-          if (isTransparent) {
-            const ctx = canvas.getContext("2d")!;
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext("2d")!;
-            tempCtx.fillStyle = "#FFFFFF";
-            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-            tempCtx.drawImage(canvas, 0, 0);
-            const imgData = tempCanvas.toDataURL("image/png");
-            const orientation = pxW >= pxH ? "landscape" : "portrait";
-            const pdf = new jsPDF({ orientation, unit: "px", format: [pxW, pxH] });
-            pdf.addImage(imgData, "PNG", 0, 0, pxW, pxH);
-            blob = pdf.output("blob");
-          } else {
-            const imgData = canvas.toDataURL("image/png");
-            const orientation = pxW >= pxH ? "landscape" : "portrait";
-            const pdf = new jsPDF({ orientation, unit: "px", format: [pxW, pxH] });
-            pdf.addImage(imgData, "PNG", 0, 0, pxW, pxH);
-            blob = pdf.output("blob");
-          }
+          const { jsPDF } = await import("jspdf");
+          const { svg2pdf } = await import("svg2pdf.js");
+          const orientation = pxW >= pxH ? "landscape" : "portrait";
+          const pdf = new jsPDF({ orientation, unit: "px", format: [pxW, pxH], compress: true });
+          const parser = new DOMParser();
+          const svgDoc = parser.parseFromString(resizedSvg, "image/svg+xml");
+          const svgElement = svgDoc.querySelector("svg") as SVGSVGElement;
+          if (!svgElement) throw new Error("Invalid SVG for PDF");
+          await svg2pdf(svgElement, pdf, { x: 0, y: 0, width: pxW, height: pxH });
+          blob = pdf.output("blob");
           break;
         }
         default:
