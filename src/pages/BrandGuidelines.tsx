@@ -294,29 +294,34 @@ export default function BrandGuidelines() {
             <section id="spacing" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">02</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Clear Space & Minimum Sizes</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Logo Alanı & Minimum Boyutlar</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Sufficient clear space must always be maintained around the logo. No graphics, text, or design elements should appear within this area.
-                  The minimum clear space is defined as <strong className="text-foreground">2×</strong> the height of the icon element on all sides.
+                  Logonun çevresinde her zaman yeterli boşluk bırakılmalıdır. Bu alan içerisinde herhangi bir grafik, metin veya tasarım unsuru yer almamalıdır.
+                  Minimum boşluk mesafesi, ikon yüksekliği baz alınarak <strong className="text-foreground">2×</strong> olarak belirlenmiştir.
                 </p>
               </div>
 
               {loadedSvgs[0] && (
-                <div className="rounded-2xl border bg-card p-8">
-                  <div className="relative mx-auto flex items-center justify-center" style={{ maxWidth: 360 }}>
+                <div className="rounded-2xl border bg-card p-12">
+                  <div className="relative mx-auto flex items-center justify-center" style={{ maxWidth: 400, minHeight: 260 }}>
                     {/* Dashed boundary */}
-                    <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/20" />
+                    <div className="absolute inset-0 rounded-xl border-2 border-dashed border-muted-foreground/30" />
                     {/* Spacing labels */}
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
-                    <div className="absolute -left-6 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
-                    <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground">2x</div>
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    <div className="absolute -left-7 top-1/2 -translate-y-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    <div className="absolute -right-7 top-1/2 -translate-y-1/2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">2x</div>
+                    {/* Dimension lines */}
+                    <div className="absolute top-0 left-1/2 h-[60px] w-px -translate-x-1/2 bg-muted-foreground/20" />
+                    <div className="absolute bottom-0 left-1/2 h-[60px] w-px -translate-x-1/2 bg-muted-foreground/20" />
+                    <div className="absolute left-0 top-1/2 h-px w-[60px] -translate-y-1/2 bg-muted-foreground/20" />
+                    <div className="absolute right-0 top-1/2 h-px w-[60px] -translate-y-1/2 bg-muted-foreground/20" />
                     <div
-                      className="m-12 max-w-[180px]"
+                      className="w-[140px]"
                       dangerouslySetInnerHTML={{
                         __html: loadedSvgs[0].content
-                          .replace(/width="[^"]*"/, 'width="100%"')
-                          .replace(/height="[^"]*"/, 'height="100%"')
+                          .replace(/width="[^"]*"/, 'width="140"')
+                          .replace(/height="[^"]*"/, 'height="auto"')
                       }}
                     />
                   </div>
@@ -325,21 +330,21 @@ export default function BrandGuidelines() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border p-5">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Digital</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Dijital</p>
                   <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Primary logo</span><span className="font-mono font-semibold">min 220px height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Horizontal logo</span><span className="font-mono font-semibold">min 300px width</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Icon only</span><span className="font-mono font-semibold">min 80px height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Wordmark only</span><span className="font-mono font-semibold">min 150px width</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Ana logo (dikey)</span><span className="font-mono font-semibold">min 220px yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yatay logo</span><span className="font-mono font-semibold">min 300px genişlik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca ikon</span><span className="font-mono font-semibold">min 80px yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca yazı tipi</span><span className="font-mono font-semibold">min 150px genişlik</span></div>
                   </div>
                 </div>
                 <div className="rounded-xl border p-5">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Print</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Baskı</p>
                   <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Primary logo</span><span className="font-mono font-semibold">min 60mm height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Horizontal logo</span><span className="font-mono font-semibold">min 80mm width</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Icon only</span><span className="font-mono font-semibold">min 25mm height</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Wordmark only</span><span className="font-mono font-semibold">min 40mm width</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Ana logo (dikey)</span><span className="font-mono font-semibold">min 60mm yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yatay logo</span><span className="font-mono font-semibold">min 80mm genişlik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca ikon</span><span className="font-mono font-semibold">min 25mm yükseklik</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Yalnızca yazı tipi</span><span className="font-mono font-semibold">min 40mm genişlik</span></div>
                   </div>
                 </div>
               </div>
