@@ -495,7 +495,7 @@ export default function BrandGuidelines() {
               </div>
 
               <div className="rounded-2xl border p-6 space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Type Scale</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Yazı Tipi Ölçeği</p>
                 <div className="space-y-3">
                   {[
                     { name: "Display", size: "48px", weight: "Bold", cls: "text-5xl font-bold" },
