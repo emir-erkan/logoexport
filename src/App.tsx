@@ -12,6 +12,7 @@ import ProjectHub from "./pages/ProjectHub";
 import Workbench from "./pages/Workbench";
 import LogoOutlines from "./pages/LogoOutlines";
 import PatternGenerator from "./pages/PatternGenerator";
+import BrandGuidelines from "./pages/BrandGuidelines";
 import SharedView from "./pages/SharedView";
 import NotFound from "./pages/NotFound";
 
