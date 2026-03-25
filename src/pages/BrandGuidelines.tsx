@@ -251,10 +251,10 @@ export default function BrandGuidelines() {
             <section id="logos" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">01</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Logo Variants</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Logolar</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  The logo is presented in multiple variants. Each variant is designed for different use cases and layout spaces.
-                  The primary logo should always be the first choice; other variants should only be used when layout constraints require them.
+                  Logo farklı varyasyonlarda sunulmaktadır. Her varyasyon, farklı kullanım senaryoları ve yerleşim alanları için tasarlanmıştır.
+                  Ana logo her zaman ilk tercih olmalıdır; diğer varyasyonlar yalnızca alan kısıtı veya tasarım gereklilikleri doğrultusunda kullanılmalıdır.
                 </p>
               </div>
 
@@ -285,7 +285,7 @@ export default function BrandGuidelines() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed p-12 text-center">
-                  <p className="text-sm text-muted-foreground">No logos uploaded yet. Upload SVG files in the Logo Export tool.</p>
+                  <p className="text-sm text-muted-foreground">Henüz logo yüklenmedi. Logo Dışa Aktarma aracında SVG dosyaları yükleyin.</p>
                 </div>
               )}
             </section>
