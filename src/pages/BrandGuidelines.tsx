@@ -466,9 +466,9 @@ export default function BrandGuidelines() {
             <section id="typography" className="space-y-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">05</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">Typography</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight">Tipografi</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Typography plays a key role in expressing the brand's personality. A clear typographic hierarchy ensures consistency and professionalism across all materials.
+                  Tipografi, markanın kişiliğini ifade etmede kilit bir rol oynar. Net bir tipografik hiyerarşi, tüm materyallerde tutarlılık ve profesyonellik sağlar.
                 </p>
               </div>
 
