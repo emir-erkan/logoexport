@@ -33,7 +33,6 @@ const checkerStyle: React.CSSProperties = {
   backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
 };
 
-/** A slider + text input combo for numeric values */
 function SliderInput({
   label,
   value,
@@ -53,7 +52,6 @@ function SliderInput({
 }) {
   const [text, setText] = useState(String(value));
 
-  // Sync text when slider changes externally
   useEffect(() => {
     setText(String(value));
   }, [value]);
@@ -106,44 +104,14 @@ export default function PatternGenerator() {
   const [layout, setLayout] = useState<LayoutMode>("grid");
   const [hSpacing, setHSpacing] = useState(40);
   const [vSpacing, setVSpacing] = useState(40);
-  const [rowOffset, setRowOffset] = useState(50); // percentage of cell width for offset rows
+  const [rowOffset, setRowOffset] = useState(50);
   const [angle, setAngle] = useState(0);
   const [elementSize, setElementSize] = useState(60);
-  const [fileSizes, setFileSizes] = useState<Record<string, number>>({}); // per-file size overrides
+  const [fileSizes, setFileSizes] = useState<Record<string, number>>({});
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [selectedBg, setSelectedBg] = useState<string | null>(null);
   const [transparentBg, setTransparentBg] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-  const [debouncedHSpacing, setDebouncedHSpacing] = useState(hSpacing);
-  const [debouncedVSpacing, setDebouncedVSpacing] = useState(vSpacing);
-  const [debouncedAngle, setDebouncedAngle] = useState(angle);
-  const [debouncedElementSize, setDebouncedElementSize] = useState(elementSize);
-  const [debouncedRowOffset, setDebouncedRowOffset] = useState(rowOffset);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedHSpacing(hSpacing), 150);
-    return () => clearTimeout(t);
-  }, [hSpacing]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedVSpacing(vSpacing), 150);
-    return () => clearTimeout(t);
-  }, [vSpacing]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedAngle(angle), 150);
-    return () => clearTimeout(t);
-  }, [angle]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedElementSize(elementSize), 150);
-    return () => clearTimeout(t);
-  }, [elementSize]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedRowOffset(rowOffset), 150);
-    return () => clearTimeout(t);
-  }, [rowOffset]);
 
   const hasOffset = layout === "brick" || layout === "diamond" || layout === "hex";
 
@@ -219,7 +187,7 @@ export default function PatternGenerator() {
     [loadedSvgs, selectedFileIds]
   );
 
-  // Expensive step: recolor SVGs — only reruns when logos or color changes, NOT on slider moves
+  // STEP 1: Expensive — recolor SVGs into symbols. Only reruns when logos or color changes.
   const recoloredSymbols = useMemo(() => {
     if (selectedSvgs.length === 0) return [];
     const parser = new DOMParser();
@@ -236,42 +204,39 @@ export default function PatternGenerator() {
     }).filter(Boolean) as { id: string; viewBox: string; innerHTML: string; fileId: string }[];
   }, [selectedSvgs, activeLogo]);
 
-  // Fast step: layout/spacing/rotation — reruns on sliders, but no expensive parsing
+  // STEP 2: Fast — build layout from symbols. Reruns on every slider change instantly.
   const patternSvg = useMemo(() => {
     if (recoloredSymbols.length === 0) return null;
 
     const canvasW = 800;
     const canvasH = 800;
     const n = recoloredSymbols.length;
-    const cellW = debouncedElementSize + debouncedHSpacing;
-    const cellH = debouncedElementSize + debouncedVSpacing;
+    const cellW = elementSize + hSpacing;
+    const cellH = elementSize + vSpacing;
 
     const symbols = recoloredSymbols.map(s =>
       `<symbol id="${s.id}" viewBox="${s.viewBox}">${s.innerHTML}</symbol>`
     );
 
-    // Build tile content based on layout
-    let tileW: number;
-    let tileH: number;
     const uses: string[] = [];
 
     const addRow = (yBase: number, xOffset = 0) => {
       for (let i = 0; i < n; i++) {
-        const fileSize = fileSizes[recoloredSymbols[i].fileId] ?? debouncedElementSize;
-        const ox = (debouncedElementSize - fileSize) / 2;
-        const oy = (debouncedElementSize - fileSize) / 2;
+        const fileSize = fileSizes[recoloredSymbols[i].fileId] ?? elementSize;
+        const ox = (elementSize - fileSize) / 2;
+        const oy = (elementSize - fileSize) / 2;
         const x = i * cellW + xOffset + ox;
         const y = yBase + oy;
-        // xlink:href required for Adobe Illustrator compatibility
         uses.push(`<use xlink:href="#s${i}" x="${x}" y="${y}" width="${fileSize}" height="${fileSize}"/>`);
-        // Wraparound copy so offset rows tile seamlessly
         if (xOffset !== 0) {
           uses.push(`<use xlink:href="#s${i}" x="${x - n * cellW}" y="${y}" width="${fileSize}" height="${fileSize}"/>`);
         }
       }
     };
 
-    const offsetPx = (cellW * debouncedRowOffset) / 100;
+    const offsetPx = (cellW * rowOffset) / 100;
+    let tileW: number;
+    let tileH: number;
 
     if (layout === "grid") {
       tileW = n * cellW;
@@ -294,20 +259,19 @@ export default function PatternGenerator() {
       addRow(cellH * 0.866, offsetPx);
     }
 
-    // Use concrete pixel values (not %) and rotate around canvas center
     const bgRect = transparentBg ? "" : `<rect width="${canvasW}" height="${canvasH}" fill="${activeBg}"/>`;
 
     return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">
   <defs>
     ${symbols.join("\n    ")}
-    <pattern id="tile" x="0" y="0" width="${tileW}" height="${tileH}" patternUnits="userSpaceOnUse" patternTransform="rotate(${debouncedAngle}, ${canvasW / 2}, ${canvasH / 2})" overflow="visible">
+    <pattern id="tile" x="0" y="0" width="${tileW}" height="${tileH}" patternUnits="userSpaceOnUse" patternTransform="rotate(${angle}, ${canvasW / 2}, ${canvasH / 2})" overflow="visible">
       ${uses.join("\n      ")}
     </pattern>
   </defs>
   ${bgRect}
   <rect width="${canvasW}" height="${canvasH}" fill="url(#tile)"/>
 </svg>`;
-  }, [recoloredSymbols, layout, debouncedHSpacing, debouncedVSpacing, debouncedRowOffset, debouncedAngle, debouncedElementSize, fileSizes, activeBg, transparentBg]);
+  }, [recoloredSymbols, layout, hSpacing, vSpacing, rowOffset, angle, elementSize, fileSizes, activeBg, transparentBg]);
 
   if (!project) {
     return (
@@ -352,7 +316,6 @@ export default function PatternGenerator() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Rail */}
         {collapsed ? (
           <div className="flex h-full w-11 flex-col items-center border-r bg-card pt-3">
             <button onClick={() => setCollapsed(false)} className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
@@ -370,7 +333,6 @@ export default function PatternGenerator() {
                 </button>
               </div>
 
-              {/* File Selection */}
               <div className="border-b p-4">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Select Logos</p>
                 <div className="space-y-1.5">
@@ -391,7 +353,6 @@ export default function PatternGenerator() {
                 </div>
               </div>
 
-              {/* Layout */}
               <div className="border-b p-4">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Layout</p>
                 <Select value={layout} onValueChange={(v) => setLayout(v as LayoutMode)}>
@@ -407,10 +368,8 @@ export default function PatternGenerator() {
                 </Select>
               </div>
 
-              {/* Element Size */}
               <div className="border-b p-4 space-y-4">
                 <SliderInput label="Base Size" value={elementSize} onChange={setElementSize} min={20} max={200} step={2} />
-                {/* Per-file size overrides */}
                 {files.filter(f => selectedFileIds.has(f.id)).map(f => (
                   <SliderInput
                     key={f.id}
@@ -424,25 +383,21 @@ export default function PatternGenerator() {
                 ))}
               </div>
 
-              {/* Spacing */}
               <div className="border-b p-4 space-y-4">
                 <SliderInput label="H Spacing" value={hSpacing} onChange={setHSpacing} min={0} max={200} step={2} />
                 <SliderInput label="V Spacing" value={vSpacing} onChange={setVSpacing} min={0} max={200} step={2} />
               </div>
 
-              {/* Row Offset - only for layouts with offset */}
               {hasOffset && (
                 <div className="border-b p-4">
                   <SliderInput label="Row Offset" value={rowOffset} onChange={setRowOffset} min={0} max={100} step={1} suffix="%" />
                 </div>
               )}
 
-              {/* Angle */}
               <div className="border-b p-4">
                 <SliderInput label="Rotation" value={angle} onChange={setAngle} min={-180} max={180} step={1} suffix="°" />
               </div>
 
-              {/* Colors */}
               <div className="p-4">
                 {logoColors.length > 0 && (
                   <div className="mb-4">
@@ -483,7 +438,6 @@ export default function PatternGenerator() {
           </>
         )}
 
-        {/* Center Stage */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex flex-1 items-center justify-center overflow-auto p-4 sm:p-8">
             {patternSvg ? (
