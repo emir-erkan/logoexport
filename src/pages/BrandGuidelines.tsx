@@ -430,7 +430,7 @@ export default function BrandGuidelines() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed p-12 text-center">
-                  <p className="text-sm text-muted-foreground">No colors defined. Add colors in the Logo Export tool.</p>
+                  <p className="text-sm text-muted-foreground">Henüz renk tanımlanmadı. Logo Dışa Aktarma aracında renkler ekleyin.</p>
                 </div>
               )}
 
