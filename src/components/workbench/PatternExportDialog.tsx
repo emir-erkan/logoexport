@@ -9,18 +9,36 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { downloadBlob } from "@/lib/export-utils";
-
 import { toast } from "sonner";
+
+interface RecoloredSymbol {
+  id: string;
+  viewBox: string;
+  innerHTML: string;
+  fileId: string;
+}
+
+interface PatternParams {
+  recoloredSymbols: RecoloredSymbol[];
+  layout: string;
+  elementSize: number;
+  hSpacing: number;
+  vSpacing: number;
+  rowOffset: number;
+  angle: number;
+  fileSizes: Record<string, number>;
+  activeBg: string;
+  transparentBg: boolean;
+}
 
 interface PatternExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  svgContent: string;
+  patternParams: PatternParams;
   projectName: string;
-  bgColor: string;
 }
 
-const FORMATS = ["svg", "png", "jpg", "pdf"] as const;
+const FORMATS = ["svg", "pdf", "png", "jpg"] as const;
 type Unit = "px" | "mm";
 const MM_TO_PX = 3.7795275591; // 96 DPI
 
@@ -28,38 +46,89 @@ function svgToDataUrl(svgString: string): string {
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
 }
 
-function resizeSvg(svgContent: string, pxW: number, pxH: number): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgContent, "image/svg+xml");
-  const svgEl = doc.querySelector("svg");
-  if (!svgEl) throw new Error("Invalid SVG");
+/**
+ * Generates a FLAT SVG — every logo placed as actual path data at its exact
+ * position. No <symbol>, no <pattern>, no <use> references.
+ * This is what Illustrator needs to show editable vector paths.
+ */
+function generateFlatSvg(params: PatternParams, pxW: number, pxH: number): string {
+  const {
+    recoloredSymbols, layout, elementSize, hSpacing, vSpacing,
+    rowOffset, angle, fileSizes, activeBg, transparentBg
+  } = params;
 
-  // Update root SVG canvas size and coordinate space
-  svgEl.setAttribute("width", String(pxW));
-  svgEl.setAttribute("height", String(pxH));
-  svgEl.setAttribute("viewBox", `0 0 ${pxW} ${pxH}`);
+  const n = recoloredSymbols.length;
+  if (n === 0) throw new Error("No logos selected");
 
-  // Update all direct child rects (background + pattern fill rect) to new dimensions
-  svgEl.querySelectorAll(":scope > rect").forEach(rect => {
-    rect.setAttribute("width", String(pxW));
-    rect.setAttribute("height", String(pxH));
-  });
+  const cellW = elementSize + hSpacing;
+  const cellH = elementSize + vSpacing;
+  const offsetPx = (cellW * rowOffset) / 100;
 
-  // Update pattern rotation center to new canvas center
-  const pattern = svgEl.querySelector("pattern");
-  if (pattern) {
-    const transform = pattern.getAttribute("patternTransform") || "";
-    const updated = transform.replace(
-      /rotate\(([^,)]+)(?:,\s*[^,)]+,\s*[^)]+)?\)/,
-      (_: string, ang: string) => `rotate(${ang}, ${pxW / 2}, ${pxH / 2})`
-    );
-    pattern.setAttribute("patternTransform", updated);
+  // Calculate how many rows/cols needed to cover the canvas after rotation
+  // We generate a larger grid than needed, then rotate + clip
+  const diag = Math.sqrt(pxW * pxW + pxH * pxH);
+  const expandedW = diag * 1.5;
+  const expandedH = diag * 1.5;
+
+  // Scale cell sizes proportionally to output size
+  const scale = pxW / 800;
+  const sCellW = cellW * scale;
+  const sCellH = cellH * scale;
+  const sOffsetPx = offsetPx * scale;
+
+  const startX = -(expandedW - pxW) / 2 - sCellW;
+  const startY = -(expandedH - pxH) / 2 - sCellH;
+
+  const cols = Math.ceil(expandedW / sCellW) + 4;
+  const rows = Math.ceil(expandedH / sCellH) + 4;
+
+  const elements: string[] = [];
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      let x = startX + col * sCellW;
+      let y = startY + row * sCellH;
+
+      if (layout === "brick" && row % 2 !== 0) {
+        x += sOffsetPx;
+      } else if (layout === "diamond") {
+        x += row % 2 !== 0 ? sOffsetPx : 0;
+        y = startY + row * (sCellH * 0.75);
+      } else if (layout === "hex") {
+        x += row % 2 !== 0 ? sOffsetPx : 0;
+        y = startY + row * (sCellH * 0.866);
+      }
+
+      const sym = recoloredSymbols[col % n];
+      const fileSize = (fileSizes[sym.fileId] ?? elementSize) * scale;
+      const ox = ((elementSize * scale) - fileSize) / 2;
+      const oy = ((elementSize * scale) - fileSize) / 2;
+
+      elements.push(
+        `<svg x="${x + ox}" y="${y + oy}" width="${fileSize}" height="${fileSize}" viewBox="${sym.viewBox}" overflow="visible">${sym.innerHTML}</svg>`
+      );
+    }
   }
 
-  return new XMLSerializer().serializeToString(svgEl);
+  const bgRect = transparentBg ? "" : `<rect width="${pxW}" height="${pxH}" fill="${activeBg}"/>`;
+  const cx = pxW / 2;
+  const cy = pxH / 2;
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${pxW}" height="${pxH}" viewBox="0 0 ${pxW} ${pxH}">
+  <defs>
+    <clipPath id="canvas-clip"><rect width="${pxW}" height="${pxH}"/></clipPath>
+  </defs>
+  ${bgRect}
+  <g clip-path="url(#canvas-clip)">
+    <g transform="rotate(${angle}, ${cx}, ${cy})">
+      ${elements.join("\n      ")}
+    </g>
+  </g>
+</svg>`;
 }
 
-function renderPatternToCanvas(svgString: string, width: number, height: number): Promise<HTMLCanvasElement> {
+function renderSvgToCanvas(svgString: string, width: number, height: number): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -79,18 +148,16 @@ function renderPatternToCanvas(svgString: string, width: number, height: number)
 export function PatternExportDialog({
   open,
   onOpenChange,
-  svgContent,
+  patternParams,
   projectName,
-  bgColor,
 }: PatternExportDialogProps) {
-  const [format, setFormat] = useState<typeof FORMATS[number]>("png");
+  const [format, setFormat] = useState<typeof FORMATS[number]>("svg");
   const [width, setWidth] = useState("2000");
   const [height, setHeight] = useState("2000");
   const [unit, setUnit] = useState<Unit>("px");
   const [exporting, setExporting] = useState(false);
 
-  const isTransparent = bgColor === "transparent";
-  const transparentAvailable = format === "svg" || format === "png";
+  const isTransparent = patternParams.transparentBg;
 
   const handleExport = async () => {
     setExporting(true);
@@ -105,59 +172,59 @@ export function PatternExportDialog({
       const pxW = unit === "mm" ? Math.round(w * MM_TO_PX) : Math.round(w);
       const pxH = unit === "mm" ? Math.round(h * MM_TO_PX) : Math.round(h);
 
-      if (pxW > 10000 || pxH > 10000) {
-        toast.error("Maximum 10000px per side");
+      if (pxW > 20000 || pxH > 20000) {
+        toast.error("Maximum 20000px per side");
         return;
       }
 
-      // Resize the already-composed pattern SVG (no recoloring needed)
-      const resizedSvg = resizeSvg(svgContent, pxW, pxH);
-
+      const flatSvg = generateFlatSvg(patternParams, pxW, pxH);
       let blob: Blob;
 
       switch (format) {
         case "svg":
-          blob = new Blob([resizedSvg], { type: "image/svg+xml" });
+          blob = new Blob([flatSvg], { type: "image/svg+xml" });
           break;
-        case "png": {
-          const canvas = await renderPatternToCanvas(resizedSvg, pxW, pxH);
-          blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
-          break;
-        }
-        case "jpg": {
-          // For JPG, ensure white bg if transparent
-          let jpgSvg = resizedSvg;
-          if (isTransparent) {
-            // Wrap with a white background
-            jpgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${pxW}" height="${pxH}" viewBox="0 0 ${pxW} ${pxH}">
-              <rect width="${pxW}" height="${pxH}" fill="#FFFFFF"/>
-              <image href="${svgToDataUrl(resizedSvg)}" width="${pxW}" height="${pxH}"/>
-            </svg>`;
-          }
-          const canvas = await renderPatternToCanvas(jpgSvg, pxW, pxH);
-          const tempCanvas = document.createElement("canvas");
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = canvas.height;
-          const tempCtx = tempCanvas.getContext("2d")!;
-          tempCtx.fillStyle = isTransparent ? "#FFFFFF" : bgColor;
-          tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-          tempCtx.drawImage(canvas, 0, 0);
-          blob = await new Promise<Blob>((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
-          break;
-        }
+
         case "pdf": {
           const { jsPDF } = await import("jspdf");
           const { svg2pdf } = await import("svg2pdf.js");
           const orientation = pxW >= pxH ? "landscape" : "portrait";
           const pdf = new jsPDF({ orientation, unit: "px", format: [pxW, pxH], compress: true });
           const parser = new DOMParser();
-          const svgDoc = parser.parseFromString(resizedSvg, "image/svg+xml");
+          const svgDoc = parser.parseFromString(flatSvg, "image/svg+xml");
           const svgElement = svgDoc.querySelector("svg") as SVGSVGElement;
           if (!svgElement) throw new Error("Invalid SVG for PDF export");
           await svg2pdf(svgElement, pdf, { x: 0, y: 0, width: pxW, height: pxH });
           blob = pdf.output("blob");
           break;
         }
+
+        case "png": {
+          const canvas = await renderSvgToCanvas(flatSvg, pxW, pxH);
+          blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
+          break;
+        }
+
+        case "jpg": {
+          let jpgSvg = flatSvg;
+          if (isTransparent) {
+            jpgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${pxW}" height="${pxH}" viewBox="0 0 ${pxW} ${pxH}">
+              <rect width="${pxW}" height="${pxH}" fill="#FFFFFF"/>
+              <image href="${svgToDataUrl(flatSvg)}" width="${pxW}" height="${pxH}"/>
+            </svg>`;
+          }
+          const canvas = await renderSvgToCanvas(jpgSvg, pxW, pxH);
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext("2d")!;
+          tempCtx.fillStyle = isTransparent ? "#FFFFFF" : patternParams.activeBg;
+          tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          tempCtx.drawImage(canvas, 0, 0);
+          blob = await new Promise<Blob>((resolve) => tempCanvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95));
+          break;
+        }
+
         default:
           throw new Error(`Unsupported format: ${format}`);
       }
@@ -171,6 +238,7 @@ export function PatternExportDialog({
       setExporting(false);
     }
   };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
@@ -178,7 +246,6 @@ export function PatternExportDialog({
           <DialogTitle className="text-sm font-medium">Export Pattern</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {/* Format */}
           <div>
             <p className="mb-2 text-xs text-muted-foreground uppercase tracking-widest">Format</p>
             <div className="flex gap-1.5">
@@ -198,7 +265,6 @@ export function PatternExportDialog({
             </div>
           </div>
 
-          {/* Size */}
           <div>
             <p className="mb-2 text-xs text-muted-foreground uppercase tracking-widest">Dimensions</p>
             <div className="flex items-center gap-2">
@@ -240,10 +306,6 @@ export function PatternExportDialog({
               </p>
             )}
           </div>
-
-          {!transparentAvailable && isTransparent && (
-            <p className="text-[10px] text-muted-foreground">Transparent background only available for SVG & PNG</p>
-          )}
 
           <Button onClick={handleExport} disabled={exporting} className="w-full">
             {exporting ? "Exporting..." : "Download"}

@@ -466,13 +466,23 @@ export default function PatternGenerator() {
         </div>
       </div>
 
-      {exportOpen && patternSvg && (
+      {exportOpen && recoloredSymbols.length > 0 && (
         <PatternExportDialog
           open={exportOpen}
           onOpenChange={setExportOpen}
-          svgContent={patternSvg}
           projectName={`${project.name}-pattern`}
-          bgColor={activeBg}
+          patternParams={{
+            recoloredSymbols,
+            layout,
+            elementSize,
+            hSpacing,
+            vSpacing,
+            rowOffset,
+            angle,
+            fileSizes,
+            activeBg,
+            transparentBg,
+          }}
         />
       )}
     </div>
